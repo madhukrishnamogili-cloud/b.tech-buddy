@@ -32,7 +32,7 @@ if app_mode == "🤖 Project & Lab Guide":
     try:
         # మీరు ఇచ్చిన కీ తో బ్రెయిన్ కనెక్ట్ అవుతుంది
         client = Groq(api_key=api_key_input)
-        st.caption("🟢 Connected to Brain: Llama-3 (Groq)") 
+        st.caption("🟢 Connected to Brain: Llama-3.1 (Groq)") 
         st.markdown("EEE కోడింగ్ ఎర్రర్స్ నుంచి, IoT, ఎలక్ట్రానిక్స్ & సర్క్యూట్ డౌట్స్ వరకు ఏదైనా అడగండి.")
         
         if "messages" not in st.session_state:
@@ -48,7 +48,7 @@ if app_mode == "🤖 Project & Lab Guide":
             smart_prompt = prompt + " (Reply in English. Keep it simple and easy to understand for an engineering student.)"
             chat_completion = client.chat.completions.create(
                 messages=[{"role": "user", "content": smart_prompt}],
-                model="llama3-8b-8192",
+                model="llama-3.1-8b-instant", 
             )
             response = chat_completion.choices[0].message.content
             
@@ -56,7 +56,7 @@ if app_mode == "🤖 Project & Lab Guide":
             st.session_state.messages.append({"role": "assistant", "content": response})
             
     except Exception as e:
-        st.error(f"మీరు ఇచ్చిన కీ తప్పు బాస్! ఎర్రర్: {e}")
+        st.error(f"ఎర్రర్ ఇదీ బాస్: {e}")
 
 # మిగతా ఫీచర్స్
 elif app_mode == "📚 Exam Hacker (Notes)":
