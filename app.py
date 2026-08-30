@@ -32,9 +32,9 @@ if app_mode == "🤖 Project Guide":
         
         try:
             client = Groq(api_key=user_key)
-            # ఇక్కడే మోడల్ పేరు మార్చాం (Super stable Mixtral Model)
+            # ఇక్కడే స్టేబుల్ బ్రెయిన్ పేరు మార్చాం 
             response = client.chat.completions.create(
-                model="mixtral-8x7b-32768",
+                model="gemma2-9b-it",
                 messages=[{"role": "user", "content": prompt + " (Reply in English. Keep it simple for an engineering student.)"}]
             )
             ans = response.choices[0].message.content
@@ -44,4 +44,4 @@ if app_mode == "🤖 Project Guide":
             st.error(f"ఎర్రర్ ఇదీ బాస్: {e}")
 
 else:
-    st.info("ఈ ఫీచర్ డెవలప్‌మెంట్‌లో ఉంది బాస్!")
+    st.info("ఈ ఫీచర్ డెవలప్‌మెంట్‌లో ఉంది బాస్!"
