@@ -1,4 +1,4 @@
-mport streamlit as st
+import streamlit as st
 import google.generativeai as genai
 
 st.set_page_config(page_title="B.Tech Buddy", page_icon="🎓", layout="wide")
