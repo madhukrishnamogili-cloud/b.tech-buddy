@@ -8,7 +8,6 @@ with st.sidebar:
     st.caption("No Settings, No Secrets!")
     st.divider()
     
-    # ఇక్కడే డైరెక్ట్ గా కీ ఇచ్చేయొచ్చు
     user_key = st.text_input("🔑 Paste your Groq API Key here:", type="password")
     
     st.divider()
@@ -32,10 +31,10 @@ if app_mode == "🤖 Project Guide":
         st.session_state.chat_history.append({"role": "user", "content": prompt})
         
         try:
-            # లేటెస్ట్ బ్రెయిన్ కనెక్షన్ 
             client = Groq(api_key=user_key)
+            # ఇక్కడే మోడల్ పేరు మార్చాం (Super stable Mixtral Model)
             response = client.chat.completions.create(
-                model="llama-3.1-8b-instant",
+                model="mixtral-8x7b-32768",
                 messages=[{"role": "user", "content": prompt + " (Reply in English. Keep it simple for an engineering student.)"}]
             )
             ans = response.choices[0].message.content
