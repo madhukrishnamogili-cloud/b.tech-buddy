@@ -1,47 +1,51 @@
 import streamlit as st
-from groq import Groq
+import google.generativeai as genai
 
-st.set_page_config(page_title="B.Tech Buddy", page_icon="🎓")
+st.set_page_config(page_title="B.Tech Buddy", page_icon="🎓", layout="wide")
 
 with st.sidebar:
+    st.image("https://cdn-icons-png.flaticon.com/512/3135/3135715.png", width=100)
     st.title("B.Tech Buddy 🎓")
-    st.caption("No Settings, No Secrets!")
+    st.caption("All-in-one Campus AI")
     st.divider()
     
-    user_key = st.text_input("🔑 Paste your Groq API Key here:", type="password")
+    # గూగుల్ కీ కోసం డైరెక్ట్ బాక్స్! 
+    google_key = st.text_input("🔑 Paste your Google API Key (AIza...):", type="password")
     
     st.divider()
-    app_mode = st.radio("Menu:", ["🤖 Project Guide", "📚 Notes"])
+    st.info("Made for Engineering Students")
 
-if app_mode == "🤖 Project Guide":
-    st.header("🤖 Smart Project & Lab Guide")
+st.header("🤖 Smart Project & Lab Guide")
+
+# కీ ఇవ్వకపోతే వార్నింగ్
+if not google_key:
+    st.warning("👈 బాస్! ముందుగా ఎడమవైపు ఉన్న బాక్స్‌లో మీ Google API Key (AIza... తో మొదలయ్యేది) పేస్ట్ చేసి Enter కొట్టండి.")
+    st.stop()
+
+# కీ ఇస్తే బ్రెయిన్ ఆక్టివేట్ అవుతుంది
+try:
+    genai.configure(api_key=google_key)
+    model = genai.GenerativeModel('gemini-1.5-flash')
     
-    if not user_key:
-        st.warning("👈 బాస్! ముందుగా ఎడమవైపు ఉన్న బాక్స్‌లో మీ Groq API Key ని పేస్ట్ చేసి Enter కొట్టండి.")
-        st.stop()
-        
-    if "chat_history" not in st.session_state:
-        st.session_state.chat_history = []
-        
-    for msg in st.session_state.chat_history:
+    st.caption("🟢 Connected to Brain: Google Gemini 1.5 Flash") 
+    st.markdown("EEE కోడింగ్ ఎర్రర్స్ నుంచి, Arduino, PLC ప్రోగ్రామ్స్ & సర్క్యూట్ డౌట్స్ వరకు ఏదైనా అడగండి.")
+    
+    if "messages" not in st.session_state:
+        st.session_state.messages = []
+
+    for msg in st.session_state.messages:
         st.chat_message(msg["role"]).write(msg["content"])
-        
+
     if prompt := st.chat_input("Ask your technical doubt..."):
         st.chat_message("user").write(prompt)
-        st.session_state.chat_history.append({"role": "user", "content": prompt})
+        st.session_state.messages.append({"role": "user", "content": prompt})
         
-        try:
-            client = Groq(api_key=user_key)
-            # ఇక్కడే స్టేబుల్ బ్రెయిన్ పేరు మార్చాం 
-            response = client.chat.completions.create(
-                model="gemma2-9b-it",
-                messages=[{"role": "user", "content": prompt + " (Reply in English. Keep it simple for an engineering student.)"}]
-            )
-            ans = response.choices[0].message.content
-            st.chat_message("assistant").write(ans)
-            st.session_state.chat_history.append({"role": "assistant", "content": ans})
-        except Exception as e:
-            st.error(f"ఎర్రర్ ఇదీ బాస్: {e}")
-
-else:
-    st.info("ఈ ఫీచర్ డెవలప్‌మెంట్‌లో ఉంది బాస్!"
+        # బడ్డీ ఆన్సర్ జనరేట్ చేస్తుంది
+        smart_prompt = prompt + " (Reply in English. Keep it simple and easy to understand for an engineering student.)"
+        response = model.generate_content(smart_prompt)
+        
+        st.chat_message("assistant").write(response.text)
+        st.session_state.messages.append({"role": "assistant", "content": response.text})
+        
+except Exception as e:
+    st.error(f"ఎర్రర్ ఇదీ బాస్: {e}")
