@@ -19,15 +19,16 @@ st.header("🤖 Smart Project & Lab Guide")
 
 # కీ ఇవ్వకపోతే వార్నింగ్
 if not google_key:
-    st.warning("👈 బాస్! ముందుగా ఎడమవైపు ఉన్న బాక్స్‌లో మీ Google API Key (AIza... తో మొదలయ్యేది) పేస్ట్ చేసి Enter కొట్టండి.")
+    st.warning("👈 బాస్! ముందుగా ఎడమవైపు ఉన్న బాక్స్‌లో మీ Google API Key (AIza...) పేస్ట్ చేసి Enter కొట్టండి.")
     st.stop()
 
 # కీ ఇస్తే బ్రెయిన్ ఆక్టివేట్ అవుతుంది
 try:
     genai.configure(api_key=google_key)
-    model = genai.GenerativeModel('gemini-1.5-flash')
+    # ఇక్కడే పాత బ్రెయిన్ పేరు మార్చి 'gemini-pro' అని పెట్టాం!
+    model = genai.GenerativeModel('gemini-pro')
     
-    st.caption("🟢 Connected to Brain: Google Gemini 1.5 Flash") 
+    st.caption("🟢 Connected to Brain: Google Gemini Pro") 
     st.markdown("EEE కోడింగ్ ఎర్రర్స్ నుంచి, Arduino, PLC ప్రోగ్రామ్స్ & సర్క్యూట్ డౌట్స్ వరకు ఏదైనా అడగండి.")
     
     if "messages" not in st.session_state:
