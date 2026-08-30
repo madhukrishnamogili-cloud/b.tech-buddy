@@ -6,7 +6,7 @@ st.set_page_config(page_title="B.Tech Buddy", page_icon="🎓", layout="wide")
 with st.sidebar:
     st.image("https://cdn-icons-png.flaticon.com/512/3135/3135715.png", width=100)
     st.title("B.Tech Buddy 🎓")
-    st.caption("Stable Brain Mode 🧠")
+    st.caption("Latest Brain Mode ⚡")
     st.divider()
     
     google_key = st.text_input("🔑 Paste your Google API Key (AIza...):", type="password")
@@ -23,10 +23,10 @@ if not google_key:
 try:
     genai.configure(api_key=google_key)
     
-    # ఎలాంటి ఆటో-డిటెక్ట్ లేకుండా పక్కాగా పనిచేసే బ్రెయిన్ లాక్ చేశాం!
-    model = genai.GenerativeModel('gemini-pro')
+    # లేటెస్ట్ బ్రెయిన్ కనెక్షన్! 
+    model = genai.GenerativeModel('gemini-1.5-flash')
     
-    st.caption("🟢 Connected to Brain: Google Gemini Pro (Stable)") 
+    st.caption("🟢 Connected to Brain: Google Gemini 1.5 Flash") 
     st.markdown("EEE కోడింగ్ ఎర్రర్స్ నుంచి, Arduino, PLC ప్రోగ్రామ్స్ & సర్క్యూట్ డౌట్స్ వరకు ఏదైనా అడగండి.")
     
     if "messages" not in st.session_state:
