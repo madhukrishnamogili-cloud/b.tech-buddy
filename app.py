@@ -5,7 +5,7 @@ from PIL import Image
 st.set_page_config(page_title="My Smart App", page_icon="🚀", layout="wide")
 
 # 1. 🔑 మీ డీటెయిల్స్ ఇక్కడ పక్కాగా ఇవ్వండి
-GOOGLE_API_KEY = "AQ.Ab8RN6L8o3LNHF0t02xQz640oWR4bcoQt6dJyPkv_HsbOmrRzQ"
+GOOGLE_API_KEY = "AQ.Ab8RN6Ktqxvgb3JnoJJY8h8OXON_SXoKBatO1F7nqQgfPC0YSQ"
 ADMIN_EMAIL = "madhukkrishnamogilii@gmail.com" 
 
 # --- 🚀 One-Time Login (Persistent) ---
