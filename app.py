@@ -6,7 +6,7 @@ st.set_page_config(page_title="My Smart App", page_icon="🚀", layout="wide")
 
 # 1. 🔑 మీ డీటెయిల్స్ ఇక్కడ పక్కాగా ఇవ్వండి
 GOOGLE_API_KEY = "AQ.Ab8RN6L8o3LNHF0t02xQz640oWR4bcoQt6dJyPkv_HsbOmrRzQ"
-ADMIN_EMAIL = "madhukrishnamogili@gmail.com" 
+ADMIN_EMAIL = "maddhuukrishnamogili@gmail.com" 
 
 # --- 🚀 One-Time Login (Persistent) ---
 if "user" in st.query_params:
@@ -52,7 +52,6 @@ with st.sidebar:
     st.image(st.session_state.app_logo, width=100)
     st.title(st.session_state.app_name)
     
-    # 👑 అడ్మిన్ యాక్సెస్ (మీ ఈమెయిల్ అయితేనే ఇది ఓపెన్ అవుతుంది)
     if st.session_state.user_email == ADMIN_EMAIL:
         with st.expander("⚙️ Admin Settings (Only for you)"):
             st.info("యాప్ ఓనర్ సెట్టింగ్స్")
@@ -77,22 +76,29 @@ with st.sidebar:
 if app_mode == "🤖 Project & Lab Guide":
     st.header(f"🤖 {st.session_state.app_name} Lab Guide")
     
-    # 🧠 బ్రెయిన్ ఆప్షన్ (దీన్ని పక్కాగా వచ్చేలా సెట్ చేశాను)
-    available_models = ["models/gemini-1.5-flash", "models/gemini-1.5-pro"] # సర్వర్ పనిచేయకపోతే డీఫాల్ట్ లిస్ట్
+    # 🧠 ఫ్లాష్ లేటెస్ట్ బ్రెయిన్ సెటప్
+    available_models = ["models/gemini-1.5-flash-latest", "models/gemini-1.5-flash", "models/gemini-1.5-pro"] 
     try:
         fetched_models = []
         for m in genai.list_models():
             if 'generateContent' in m.supported_generation_methods:
                 fetched_models.append(m.name)
+        
+        # గూగుల్ లిస్ట్‌లో flash-latest ఉంటే దాన్ని తీసుకుంటుంది, లేదంటే ఫోర్స్ గా యాడ్ చేస్తుంది
         if fetched_models:
-            available_models = fetched_models # సర్వర్ పనిచేస్తే లైవ్ లిస్ట్
+            if "models/gemini-1.5-flash-latest" not in fetched_models:
+                fetched_models.insert(0, "models/gemini-1.5-flash-latest")
+            available_models = fetched_models 
     except Exception as e:
         pass
     
-    selected_model = st.selectbox("🧠 బ్రెయిన్ సెలెక్ట్ చేసుకోండి:", available_models, index=0)
+    # ఎప్పుడూ లేటెస్ట్ మోడల్ ఫస్ట్ ఉండేలా ఇండెక్స్ సెట్ చేశాం
+    default_index = available_models.index("models/gemini-1.5-flash-latest") if "models/gemini-1.5-flash-latest" in available_models else 0
+    selected_model = st.selectbox("🧠 బ్రెయిన్ సెలెక్ట్ చేసుకోండి:", available_models, index=default_index)
+    
     model = genai.GenerativeModel(selected_model)
 
-    st.markdown("EEE సర్క్యూట్స్, కాంపోనెంట్స్ ఫోటో తీసి అడగండి.")
+    st.markdown("కాంపోనెంట్స్ ఫోటో తీసి అడగండి.")
 
     tab1, tab2, tab3 = st.tabs(["💬 Text Only", "🖼️ Upload Photo", "📸 Take Camera Photo"])
     img_to_send = None
