@@ -4,8 +4,8 @@ from PIL import Image
 
 st.set_page_config(page_title="My Smart App", page_icon="🚀", layout="wide")
 
-# 1. 🔑 ఇక్కడ మీ డీటెయిల్స్ ఇవ్వండి (తర్వాత యాప్ లో కూడా మార్చుకోవచ్చు)
-DEFAULT_API_KEY = "AQ.Ab8RN6JrgQ9-tAKkbefyq3nx_0tDVS_fIGgMlM1e4AcLOVjDeA"
+# 1. 🔑 మీ డీటెయిల్స్ ఇక్కడ ఇవ్వండి
+DEFAULT_API_KEY = "AQ.Ab8RN6InS1CoK8ie-b7pHtIaoSifpdHWcrZ7UhHbwUlRl4yaNA"
 ADMIN_EMAIL = "madhukrishnamogili@gmail.com" 
 
 # --- 💾 సెషన్ స్టేట్ (మెమరీ) సెటప్ ---
@@ -49,13 +49,13 @@ with st.sidebar:
     st.image(st.session_state.app_logo, width=100)
     st.title(st.session_state.app_name)
     
-    # 👑 ఓనర్ యాక్సెస్ (మీ ఈమెయిల్ తో లాగిన్ అయితేనే ఇది వస్తుంది)
+    # 👑 అడ్మిన్ యాక్సెస్ (మీ ఈమెయిల్ తో లాగిన్ అయితేనే)
     if st.session_state.user_email == ADMIN_EMAIL:
         with st.expander("⚙️ Admin Settings (Owner Only)"):
             st.info("యాప్ సెట్టింగ్స్ & API కీ మార్చుకోండి")
             new_name = st.text_input("App Name:", st.session_state.app_name)
             new_logo = st.text_input("Logo URL:", st.session_state.app_logo)
-            new_key = st.text_input("API Key (AIza...):", st.session_state.api_key, type="password")
+            new_key = st.text_input("API Key (AIza/AQ...):", st.session_state.api_key, type="password")
             
             if st.button("💾 Save Settings"):
                 st.session_state.app_name = new_name
@@ -73,21 +73,26 @@ with st.sidebar:
         st.query_params.clear()
         st.rerun()
 
-# --- 🛡️ API Key కండిషన్స్ & వాలిడేషన్ ---
+# --- 🛡️ API Key కండిషన్స్ & లైవ్ టెస్టింగ్ ---
 current_key = st.session_state.api_key
 
-if current_key.startswith("AQ"):
-    st.error("⚠️ ఎర్రర్: మీరు ఇచ్చిన కీ 'AQ...' తో మొదలవుతోంది. ఇది ఈ యాప్‌కి పని చేయదు. దయచేసి గూగుల్ AI స్టూడియోలో కొత్త ప్రాజెక్ట్ క్రియేట్ చేసి 'AIza...' తో మొదలయ్యే కీ తీసుకోండి.")
+if not current_key or current_key == "ఇక్కడ_మీ_API_KEY_పేస్ట్_చేయండి":
+    st.warning("⚠️ దయచేసి అడ్మిన్ సెట్టింగ్స్‌లో మీ API Key ఇవ్వండి.")
     st.stop()
+elif current_key.startswith("AQ"):
+    st.info("ℹ️ మీరు కొత్త 'AQ...' ఫార్మాట్ కీ వాడుతున్నారు. కనెక్ట్ అవుతుందో లేదో చెక్ చేస్తున్నాను...")
 elif not current_key.startswith("AIza"):
-    st.warning("⚠️ దయచేసి అడ్మిన్ సెట్టింగ్స్ లో కరెక్ట్ API కీ (AIza... తో మొదలయ్యేది) ఇవ్వండి.")
+    st.error("⚠️ ఇది సరైన గూగుల్ API కీ ఫార్మాట్ కాదు. (AIza... లేదా AQ... తో మొదలవ్వాలి)")
     st.stop()
-else:
-    try:
-        genai.configure(api_key=current_key)
-    except Exception as e:
-        st.error("API Key కనెక్ట్ అవ్వలేదు బాస్!")
-        st.stop()
+
+# కీ పనిచేస్తుందో లేదో ముందే చెక్ చేయడం
+try:
+    genai.configure(api_key=current_key)
+    # మోడల్స్ ని పిలిచి కీ వాలిడిటీ టెస్ట్ చేస్తాం
+    list(genai.list_models()) 
+except Exception as e:
+    st.error("❌ ఈ API Key పనిచేయట్లేదు. దయచేసి కొత్త కీ (AIza...) క్రియేట్ చేసి వాడండి.")
+    st.stop()
 
 # --- ఆప్షన్ 1: ప్రాజెక్ట్ గైడ్ & 🧠 బ్రెయిన్ ఆప్షన్ ---
 if app_mode == "🤖 Project & Lab Guide":
@@ -97,18 +102,12 @@ if app_mode == "🤖 Project & Lab Guide":
         "models/gemini-2.5-flash",
         "models/gemini-2.5-pro",
         "models/gemini-2.5-flash-preview-tts",
-        "models/gemini-2.5-pro-preview-tts",
         "models/gemma-4-26b-a4b-it",
-        "models/gemma-4-31b-it",
-        "models/gemini-flash-latest",
-        "models/gemini-flash-lite-latest",
-        "models/gemini-pro-latest"
+        "models/gemini-1.5-flash-latest"
     ] 
     
-    selected_model = st.selectbox("🧠 మీ ఇష్టం వచ్చిన బ్రెయిన్ సెలెక్ట్ చేసుకోండి:", available_models, index=6) 
+    selected_model = st.selectbox("🧠 మీ ఇష్టం వచ్చిన బ్రెయిన్ సెలెక్ట్ చేసుకోండి:", available_models, index=0) 
     model = genai.GenerativeModel(selected_model)
-
-    st.markdown("కాంపోనెంట్స్ ఫోటో తీసి అడగండి.")
 
     tab1, tab2, tab3 = st.tabs(["💬 Text Only", "🖼️ Upload Photo", "📸 Take Camera Photo"])
     img_to_send = None
@@ -158,15 +157,13 @@ if app_mode == "🤖 Project & Lab Guide":
             except Exception as e:
                 st.error(f"ఎర్రర్ వచ్చింది బాస్: {e}")
 
-# --- ఆప్షన్ 2: ఈవెంట్ ప్లానర్ ---
+# --- ఇతర ఫీచర్లు ---
 elif app_mode == "🎪 Event Planner":
-    st.header("🎪 Technical Event & Workshop Planner")
-    st.info("వర్క్‌షాప్స్ కోసం ఐడియాస్ ఇక్కడ ప్లాన్ చేసుకోండి!")
-
+    st.header("🎪 Event Planner")
+    st.info("వర్క్‌షాప్స్ ఐడియాస్ కోసం ఫీచర్ త్వరలో వస్తుంది.")
 elif app_mode == "📚 Exam Hacker":
     st.header("📚 Exam Hacker")
     st.info("Coming soon!")
-
 elif app_mode == "💼 Placement Prep":
     st.header("💼 Placement Prep")
     st.info("Coming soon!")
