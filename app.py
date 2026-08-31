@@ -1,4 +1,4 @@
-[07:46, 8/31/2026] ᴍᴀᴅʜᴜ ᴋʀɪsʜɴᴀ 👑: import streamlit as st
+import streamlit as st
 import google.generativeai as genai
 from PIL import Image
 
