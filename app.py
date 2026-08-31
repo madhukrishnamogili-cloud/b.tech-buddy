@@ -2,69 +2,69 @@ import streamlit as st
 import google.generativeai as genai
 from PIL import Image
 
-# 1. పేజీ సెటప్ ఎప్పుడూ పైనే ఉండాలి!
 st.set_page_config(page_title="My Smart App", page_icon="🚀", layout="wide")
 
-# 2. మీ API కీ ఇక్కడ ఇవ్వండి (AIzaSy...)
+# 1. మీ కీ మరియు అడ్మిన్ ఈమెయిల్ ఇక్కడ ఇవ్వండి!
 GOOGLE_API_KEY = "AQ.Ab8RN6L8o3LNHF0t02xQz640oWR4bcoQt6dJyPkv_HsbOmrRzQ"
+ADMIN_EMAIL = "madhukrishnamogili@gmail.com" 
 
-# --- సెషన్ స్టేట్ (మెమరీ) సెటప్ ---
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
+if "user_email" not in st.session_state:
+    st.session_state.user_email = ""
 if "app_name" not in st.session_state:
-    st.session_state.app_name = "B.Tech Buddy 🎓"
+    st.session_state.app_name = "Tech Mithra 🎓" # మీకు నచ్చిన పేరు పెట్టుకోండి
 if "app_logo" not in st.session_state:
     st.session_state.app_logo = "https://cdn-icons-png.flaticon.com/512/3135/3135715.png"
 
-# --- 🔐 లాగిన్ పేజీ (First Screen) ---
+# --- 🔐 లాగిన్ పేజీ ---
 if not st.session_state.logged_in:
-    st.markdown("<h1 style='text-align: center;'>🔐 Login to Continue</h1>", unsafe_allow_html=True)
-    st.markdown("<p style='text-align: center;'>Please enter your email and password to access the app.</p>", unsafe_allow_html=True)
+    st.markdown(f"<h1 style='text-align: center;'>🔐 Login to {st.session_state.app_name}</h1>", unsafe_allow_html=True)
     
     col1, col2, col3 = st.columns([1,2,1])
     with col2:
         email_input = st.text_input("📧 Email Address")
         password_input = st.text_input("🔑 Password", type="password")
         
-        if st.button("🚀 Login / Enter App", use_container_width=True):
+        if st.button("🚀 Login", use_container_width=True):
             if email_input != "" and password_input != "":
-                # ఇక్కడ ఈమెయిల్ ఇచ్చి లాగిన్ నొక్కితేనే యాప్ ఓపెన్ అవుతుంది!
                 st.session_state.logged_in = True
+                st.session_state.user_email = email_input # యూజర్ ఈమెయిల్ సేవ్ చేస్తున్నాం
                 st.rerun()
             else:
                 st.error("బాస్, ఈమెయిల్ మరియు పాస్‌వర్డ్ కచ్చితంగా ఇవ్వాలి!")
-    st.stop() # లాగిన్ అవ్వకపోతే కింద ఉన్న కోడ్ రన్ అవ్వదు (సెక్యూరిటీ)
+    st.stop()
 
-# --- 📱 మెయిన్ యాప్ (లాగిన్ అయ్యాక ఓపెన్ అవుతుంది) ---
+# --- 📱 మెయిన్ యాప్ ---
 try:
     genai.configure(api_key=GOOGLE_API_KEY)
 except Exception as e:
     pass
 
-# ఎడమవైపు సైడ్‌బార్ 
 with st.sidebar:
     st.image(st.session_state.app_logo, width=100)
     st.title(st.session_state.app_name)
     
-    # ⚙️ యాప్ పేరు, లోగో మార్చుకునే స్పెషల్ ఆప్షన్!
-    with st.expander("⚙️ App Settings (Rename & Logo)"):
-        new_name = st.text_input("Change App Name:", st.session_state.app_name)
-        new_logo = st.text_input("Change Logo (Image URL):", st.session_state.app_logo)
-        if st.button("Save Changes"):
-            st.session_state.app_name = new_name
-            st.session_state.app_logo = new_logo
-            st.rerun()
-            
+    # 👑 అడ్మిన్ యాక్సెస్ లాజిక్ (మీ ఈమెయిల్ అయితేనే ఇది ఓపెన్ అవుతుంది)
+    if st.session_state.user_email == ADMIN_EMAIL:
+        with st.expander("⚙️ Admin Settings (Only for you)"):
+            new_name = st.text_input("Change App Name:", st.session_state.app_name)
+            new_logo = st.text_input("Change Logo URL:", st.session_state.app_logo)
+            if st.button("Save Changes"):
+                st.session_state.app_name = new_name
+                st.session_state.app_logo = new_logo
+                st.rerun()
+                
     st.divider()
     app_mode = st.radio("Select Feature:", ["🤖 Project & Lab Guide", "📚 Exam Hacker", "💼 Placement Prep"])
     st.divider()
     
-    # లాగౌట్ బటన్
     if st.button("🚪 Logout"):
         st.session_state.logged_in = False
+        st.session_state.user_email = ""
         st.rerun()
 
-# --- ఆప్షన్ 1: ప్రాజెక్ట్ & ల్యాబ్ గైడ్ (మీ పాత ఫీచర్లు అన్నీ) ---
+# --- ఆప్షన్ 1: ప్రాజెక్ట్ గైడ్ ---
 if app_mode == "🤖 Project & Lab Guide":
     st.header(f"🤖 Welcome to {st.session_state.app_name}")
     
