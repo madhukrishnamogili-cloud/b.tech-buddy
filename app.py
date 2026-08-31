@@ -20,8 +20,7 @@ with st.sidebar:
     st.title("B.Tech Buddy 🎓")
     st.caption("Smart AI Assistant 🚀")
     st.divider()
-    app_mode = st.radio("Select Feature:", ["🤖 Project & Lab Guide", "📚 Exam Hacker (Note…
-[07:51, 8/31/2026] ᴍᴀᴅʜᴜ ᴋʀɪsʜɴᴀ 👑: import streamlit as st
+    app_mode = st.radio("Select Feature:", ["🤖 Project & Lab Guide", "📚 Exam Hacker (Notes)", "💼 Placement Prep", "🎪 Event Planner"])
 import google.generativeai as genai
 from PIL import Image
 
