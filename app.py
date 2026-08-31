@@ -6,7 +6,7 @@ st.set_page_config(page_title="My Smart App", page_icon="🚀", layout="wide")
 
 # 1. 🔑 మీ డీటెయిల్స్ ఇక్కడ పక్కాగా ఇవ్వండి
 GOOGLE_API_KEY = "AQ.Ab8RN6L8o3LNHF0t02xQz640oWR4bcoQt6dJyPkv_HsbOmrRzQ"
-ADMIN_EMAIL = "madhuukrishnamogili@gmail.com" 
+ADMIN_EMAIL = "madhukrishnamogili@gmail.com" 
 
 # --- 🚀 One-Time Login (Persistent) ---
 if "user" in st.query_params:
