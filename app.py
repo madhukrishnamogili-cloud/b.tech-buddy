@@ -4,11 +4,19 @@ from PIL import Image
 
 st.set_page_config(page_title="My Smart App", page_icon="🚀", layout="wide")
 
-# 1. 🔑 మీ డీటెయిల్స్ ఇక్కడ పక్కాగా ఇవ్వండి
-GOOGLE_API_KEY = "AQ.Ab8RN6IDawkH4l8a-tNnkZEA_VTyDBHuAJL2IzMv21ChTQjuqw"
-ADMIN_EMAIL = "madhukkrishnamogilii@gmail.com" 
+# 1. 🔑 ఇక్కడ మీ డీటెయిల్స్ ఇవ్వండి (తర్వాత యాప్ లో కూడా మార్చుకోవచ్చు)
+DEFAULT_API_KEY = "AQ.Ab8RN6JrgQ9-tAKkbefyq3nx_0tDVS_fIGgMlM1e4AcLOVjDeA"
+ADMIN_EMAIL = "madhukrishnamogili@gmail.com" 
 
-# --- 🚀 One-Time Login (Persistent) ---
+# --- 💾 సెషన్ స్టేట్ (మెమరీ) సెటప్ ---
+if "api_key" not in st.session_state:
+    st.session_state.api_key = DEFAULT_API_KEY
+if "app_name" not in st.session_state:
+    st.session_state.app_name = "Tech Mithra 🎓"
+if "app_logo" not in st.session_state:
+    st.session_state.app_logo = "https://cdn-icons-png.flaticon.com/512/3135/3135715.png"
+
+# --- 🚀 One-Time Login ---
 if "user" in st.query_params:
     st.session_state.logged_in = True
     st.session_state.user_email = st.query_params["user"]
@@ -16,11 +24,6 @@ else:
     if "logged_in" not in st.session_state:
         st.session_state.logged_in = False
         st.session_state.user_email = ""
-
-if "app_name" not in st.session_state:
-    st.session_state.app_name = "Tech Mithra 🎓"
-if "app_logo" not in st.session_state:
-    st.session_state.app_logo = "https://cdn-icons-png.flaticon.com/512/3135/3135715.png"
 
 # --- 🔐 లాగిన్ పేజీ ---
 if not st.session_state.logged_in:
@@ -41,25 +44,23 @@ if not st.session_state.logged_in:
                 st.error("బాస్, ఈమెయిల్ మరియు పాస్‌వర్డ్ కచ్చితంగా ఇవ్వాలి!")
     st.stop()
 
-# --- 📱 మెయిన్ యాప్ ప్రారంభం ---
-try:
-    genai.configure(api_key=GOOGLE_API_KEY)
-except Exception as e:
-    st.error("API Key కనెక్ట్ అవ్వలేదు బాస్!")
-
 # ⬅️ సైడ్‌బార్ & ⚙️ అడ్మిన్ సెట్టింగ్స్
 with st.sidebar:
     st.image(st.session_state.app_logo, width=100)
     st.title(st.session_state.app_name)
     
+    # 👑 ఓనర్ యాక్సెస్ (మీ ఈమెయిల్ తో లాగిన్ అయితేనే ఇది వస్తుంది)
     if st.session_state.user_email == ADMIN_EMAIL:
-        with st.expander("⚙️ Admin Settings (Only for you)"):
-            st.info("యాప్ ఓనర్ సెట్టింగ్స్")
-            new_name = st.text_input("Change App Name:", st.session_state.app_name)
-            new_logo = st.text_input("Change Logo URL:", st.session_state.app_logo)
-            if st.button("Save Changes"):
+        with st.expander("⚙️ Admin Settings (Owner Only)"):
+            st.info("యాప్ సెట్టింగ్స్ & API కీ మార్చుకోండి")
+            new_name = st.text_input("App Name:", st.session_state.app_name)
+            new_logo = st.text_input("Logo URL:", st.session_state.app_logo)
+            new_key = st.text_input("API Key (AIza...):", st.session_state.api_key, type="password")
+            
+            if st.button("💾 Save Settings"):
                 st.session_state.app_name = new_name
                 st.session_state.app_logo = new_logo
+                st.session_state.api_key = new_key
                 st.rerun()
                 
     st.divider()
@@ -72,11 +73,26 @@ with st.sidebar:
         st.query_params.clear()
         st.rerun()
 
+# --- 🛡️ API Key కండిషన్స్ & వాలిడేషన్ ---
+current_key = st.session_state.api_key
+
+if current_key.startswith("AQ"):
+    st.error("⚠️ ఎర్రర్: మీరు ఇచ్చిన కీ 'AQ...' తో మొదలవుతోంది. ఇది ఈ యాప్‌కి పని చేయదు. దయచేసి గూగుల్ AI స్టూడియోలో కొత్త ప్రాజెక్ట్ క్రియేట్ చేసి 'AIza...' తో మొదలయ్యే కీ తీసుకోండి.")
+    st.stop()
+elif not current_key.startswith("AIza"):
+    st.warning("⚠️ దయచేసి అడ్మిన్ సెట్టింగ్స్ లో కరెక్ట్ API కీ (AIza... తో మొదలయ్యేది) ఇవ్వండి.")
+    st.stop()
+else:
+    try:
+        genai.configure(api_key=current_key)
+    except Exception as e:
+        st.error("API Key కనెక్ట్ అవ్వలేదు బాస్!")
+        st.stop()
+
 # --- ఆప్షన్ 1: ప్రాజెక్ట్ గైడ్ & 🧠 బ్రెయిన్ ఆప్షన్ ---
 if app_mode == "🤖 Project & Lab Guide":
     st.header(f"🤖 {st.session_state.app_name} Lab Guide")
     
-    # 🧠 మీరు పంపిన ఫోటోలోని మోడల్స్ లిస్ట్
     available_models = [
         "models/gemini-2.5-flash",
         "models/gemini-2.5-pro",
@@ -89,7 +105,7 @@ if app_mode == "🤖 Project & Lab Guide":
         "models/gemini-pro-latest"
     ] 
     
-    selected_model = st.selectbox("🧠 మీ ఇష్టం వచ్చిన బ్రెయిన్ సెలెక్ట్ చేసుకోండి:", available_models, index=6) # డీఫాల్ట్ గా flash-latest సెట్ చేశాను
+    selected_model = st.selectbox("🧠 మీ ఇష్టం వచ్చిన బ్రెయిన్ సెలెక్ట్ చేసుకోండి:", available_models, index=6) 
     model = genai.GenerativeModel(selected_model)
 
     st.markdown("కాంపోనెంట్స్ ఫోటో తీసి అడగండి.")
