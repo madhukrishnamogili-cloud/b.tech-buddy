@@ -4,16 +4,22 @@ from PIL import Image
 
 st.set_page_config(page_title="My Smart App", page_icon="🚀", layout="wide")
 
-# 1. మీ కీ మరియు అడ్మిన్ ఈమెయిల్ ఇక్కడ ఇవ్వండి!
+# 1. ఇక్కడ మీ API కీ మరియు అడ్మిన్ ఈమెయిల్ ఇవ్వండి
 GOOGLE_API_KEY = "AQ.Ab8RN6L8o3LNHF0t02xQz640oWR4bcoQt6dJyPkv_HsbOmrRzQ"
 ADMIN_EMAIL = "madhukrishnamogili@gmail.com" 
 
-if "logged_in" not in st.session_state:
-    st.session_state.logged_in = False
-if "user_email" not in st.session_state:
-    st.session_state.user_email = ""
+# --- 🚀 One-Time Login (Persistent) లాజిక్ ---
+# బ్రౌజర్ URL లో 'user' ఉంటే, డైరెక్ట్ గా లాగిన్ అయిపోయినట్లే!
+if "user" in st.query_params:
+    st.session_state.logged_in = True
+    st.session_state.user_email = st.query_params["user"]
+else:
+    if "logged_in" not in st.session_state:
+        st.session_state.logged_in = False
+        st.session_state.user_email = ""
+
 if "app_name" not in st.session_state:
-    st.session_state.app_name = "Tech Mithra 🎓" # మీకు నచ్చిన పేరు పెట్టుకోండి
+    st.session_state.app_name = "Tech Mithra 🎓"
 if "app_logo" not in st.session_state:
     st.session_state.app_logo = "https://cdn-icons-png.flaticon.com/512/3135/3135715.png"
 
@@ -29,7 +35,9 @@ if not st.session_state.logged_in:
         if st.button("🚀 Login", use_container_width=True):
             if email_input != "" and password_input != "":
                 st.session_state.logged_in = True
-                st.session_state.user_email = email_input # యూజర్ ఈమెయిల్ సేవ్ చేస్తున్నాం
+                st.session_state.user_email = email_input
+                # ఈ లైన్ వల్లే మీరు రిఫ్రెష్ చేసినా లాగిన్ పోదు!
+                st.query_params["user"] = email_input 
                 st.rerun()
             else:
                 st.error("బాస్, ఈమెయిల్ మరియు పాస్‌వర్డ్ కచ్చితంగా ఇవ్వాలి!")
@@ -45,7 +53,7 @@ with st.sidebar:
     st.image(st.session_state.app_logo, width=100)
     st.title(st.session_state.app_name)
     
-    # 👑 అడ్మిన్ యాక్సెస్ లాజిక్ (మీ ఈమెయిల్ అయితేనే ఇది ఓపెన్ అవుతుంది)
+    # 👑 అడ్మిన్ యాక్సెస్ (మీ ఈమెయిల్ ఇస్తేనే వస్తుంది)
     if st.session_state.user_email == ADMIN_EMAIL:
         with st.expander("⚙️ Admin Settings (Only for you)"):
             new_name = st.text_input("Change App Name:", st.session_state.app_name)
@@ -62,26 +70,19 @@ with st.sidebar:
     if st.button("🚪 Logout"):
         st.session_state.logged_in = False
         st.session_state.user_email = ""
+        st.query_params.clear() # లాగౌట్ నొక్కితేనే URL క్లియర్ అవుతుంది
         st.rerun()
 
 # --- ఆప్షన్ 1: ప్రాజెక్ట్ గైడ్ ---
 if app_mode == "🤖 Project & Lab Guide":
     st.header(f"🤖 Welcome to {st.session_state.app_name}")
     
-    available_models = []
-    try:
-        for m in genai.list_models():
-            if 'generateContent' in m.supported_generation_methods:
-                available_models.append(m.name)
-    except:
-        pass
+    # 🧠 బ్రెయిన్ ఆప్షన్ ఎప్పటికీ మాయం అవ్వకుండా ఫిక్స్ చేశాం!
+    hardcoded_models = ["gemini-1.5-flash", "gemini-1.5-pro", "gemini-1.0-pro"]
+    selected_model_name = st.selectbox("🧠 బ్రెయిన్ సెలెక్ట్ చేసుకోండి:", hardcoded_models, index=0)
     
-    selected_model = "models/gemini-1.5-flash"
-    if available_models:
-        default_idx = available_models.index("models/gemini-1.5-flash") if "models/gemini-1.5-flash" in available_models else 0
-        selected_model = st.selectbox("🧠 బ్రెయిన్ సెలెక్ట్ చేసుకోండి:", available_models, index=default_idx)
-    
-    model = genai.GenerativeModel(selected_model)
+    # ఎంచుకున్న బ్రెయిన్ ని సెట్ చేయడం
+    model = genai.GenerativeModel(selected_model_name)
 
     tab1, tab2, tab3 = st.tabs(["💬 Text Only", "🖼️ Upload Photo", "📸 Take Camera Photo"])
     img_to_send = None
@@ -108,7 +109,7 @@ if app_mode == "🤖 Project & Lab Guide":
     if prompt := st.chat_input("Ask your doubt..."):
         st.chat_message("user").write(prompt)
         
-        with st.spinner("ఆలోచిస్తోంది... ⏳"):
+        with st.spinner(f"{selected_model_name} ఆలోచిస్తోంది... ⏳"):
             try:
                 smart_prompt = prompt + " (Reply in English. Keep it simple.)"
                 gemini_history = []
