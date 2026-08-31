@@ -7,28 +7,6 @@ GOOGLE_API_KEY = "AQ.Ab8RN6Jy4r-iCHqbNbl-5TmQOoDwK2Hdm8Pu6xgH1F1exsG-Nw"
 
 st.set_page_config(page_title="B.Tech Buddy", page_icon="🎓", layout="wide")
 
-# API Configuration
-try:
-    genai.configure(api_key=GOOGLE_API_KEY)
-    model = genai.GenerativeModel('gemini-1.5-flash')
-except Exception as e:
-    st.error("బాస్, API Key కరెక్ట్‌గా ఉందో లేదో చెక్ చేయండి!")
-
-# ఎడమవైపు సైడ్‌బార్
-with st.sidebar:
-    st.image("https://cdn-icons-png.flaticon.com/512/3135/3135715.png", width=100)
-    st.title("B.Tech Buddy 🎓")
-    st.caption("Smart AI Assistant 🚀")
-    st.divider()
-    app_mode = st.radio("Select Feature:", ["🤖 Project & Lab Guide", "📚 Exam Hacker (Notes)", "💼 Placement Prep", "🎪 Event Planner"])
-import google.generativeai as genai
-from PIL import Image
-
-# 1. ఇక్కడ మీ AIza... కీ పర్మనెంట్ గా ఇవ్వండి
-GOOGLE_API_KEY = "ఇక్కడ_మీ_API_KEY_పేస్ట్_చేయండి"
-
-st.set_page_config(page_title="B.Tech Buddy", page_icon="🎓", layout="wide")
-
 try:
     genai.configure(api_key=GOOGLE_API_KEY)
 except Exception as e:
