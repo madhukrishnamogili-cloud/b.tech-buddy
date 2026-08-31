@@ -1,81 +1,85 @@
 import streamlit as st
 import google.generativeai as genai
+from PIL import Image
 
-# పేజీ డిజైన్
+# 1. ఇక్కడ మీ కీ పర్మనెంట్ గా ఇచ్చేయండి! (డబుల్ కోట్స్ మధ్యలో)
+GOOGLE_API_KEY = "AQ.Ab8RN6Kl2MXEXcOEY_sHI9-RQNKh5VrUx6N9P10Cox09OYu5Hw"
+
 st.set_page_config(page_title="B.Tech Buddy", page_icon="🎓", layout="wide")
 
-# ఎడమవైపు సైడ్‌బార్ మెనూ
+# కీ సెటప్ & బ్రెయిన్ కనెక్షన్
+try:
+    genai.configure(api_key=GOOGLE_API_KEY)
+    model = genai.GenerativeModel('gemini-1.5-flash')
+except Exception as e:
+    st.error("బాస్, పైన కోడ్‌లో API Key కరెక్ట్‌గా ఇచ్చారో లేదో చెక్ చేసుకోండి!")
+
+# ఎడమవైపు సైడ్‌బార్
 with st.sidebar:
     st.image("https://cdn-icons-png.flaticon.com/512/3135/3135715.png", width=100)
     st.title("B.Tech Buddy 🎓")
-    st.caption("All-in-one Campus AI ⚡")
+    st.caption("Auto-Login & Camera Mode 📸")
     st.divider()
-    
-    # కీ అడిగే బాక్స్
-    google_key = st.text_input("🔑 Paste your Google API Key (AIza...):", type="password")
-    st.divider()
-    
-    # మీరు అడిగిన 4 ఆప్షన్స్ ఇక్కడే ఉన్నాయి!
     app_mode = st.radio("Select Feature:", ["🤖 Project & Lab Guide", "📚 Exam Hacker (Notes)", "💼 Placement Prep", "🎪 Event Planner"])
     st.divider()
     st.info("Made for Engineering Students")
 
-# --- ఆప్షన్ 1: అసలైన బడ్డీ (వర్కింగ్) ---
+# --- ఆప్షన్ 1: ప్రాజెక్ట్ గైడ్ (విత్ కెమెరా & ఫోటో అప్‌లోడ్) ---
 if app_mode == "🤖 Project & Lab Guide":
     st.header("🤖 Smart Project & Lab Guide")
+    st.caption("🟢 Connected to Brain: Google Gemini 1.5 Flash") 
+    st.markdown("EEE సర్క్యూట్స్, కాంపోనెంట్స్ లేదా కోడింగ్ ఎర్రర్స్ ఫోటో తీసి అడగండి!")
+    
+    # ఫోటో అప్‌లోడ్ & కెమెరా ఆప్షన్స్
+    col1, col2 = st.columns(2)
+    with col1:
+        uploaded_file = st.file_uploader("🖼️ అప్‌లోడ్ ఫోటో", type=["jpg", "jpeg", "png"])
+    with col2:
+        camera_photo = st.camera_input("📸 టేక్ ఫోటో (కెమెరా)")
 
-    if not google_key:
-        st.warning("👈 బాస్! ముందుగా ఎడమవైపు ఉన్న బాక్స్‌లో మీ Google API Key ఇచ్చి Enter కొట్టండి.")
-        st.stop()
+    img_to_send = None
+    if uploaded_file:
+        img_to_send = Image.open(uploaded_file)
+        st.image(img_to_send, caption="మీరు అప్‌లోడ్ చేసిన ఫోటో", width=300)
+    elif camera_photo:
+        img_to_send = Image.open(camera_photo)
+        st.image(img_to_send, caption="మీరు తీసిన ఫోటో", width=300)
 
-    try:
-        genai.configure(api_key=google_key)
+    if "messages" not in st.session_state:
+        st.session_state.messages = []
+
+    for msg in st.session_state.messages:
+        st.chat_message(msg["role"]).write(msg["content"])
+
+    if prompt := st.chat_input("Ask your technical doubt..."):
+        st.chat_message("user").write(prompt)
+        st.session_state.messages.append({"role": "user", "content": prompt})
         
-        available_models = []
-        for m in genai.list_models():
-            if 'generateContent' in m.supported_generation_methods:
-                available_models.append(m.name)
-                
-        if not available_models:
-            st.error("బాస్! మీ కీ కి ఎలాంటి బ్రెయిన్స్ లింక్ అవ్వలేదు.")
-            st.stop()
-            
-        # బ్రెయిన్ సెలెక్షన్ డ్రాప్‌డౌన్
-        selected_model = st.selectbox("🧠 మీ ఇష్టం వచ్చిన బ్రెయిన్ సెలెక్ట్ చేసుకోండి (flash మోడల్స్ బెస్ట్):", available_models)
-        
-        model = genai.GenerativeModel(selected_model)
-        st.markdown("EEE కోడింగ్ ఎర్రర్స్ నుంచి, Arduino, PLC ప్రోగ్రామ్స్ & సర్క్యూట్ డౌట్స్ వరకు ఏదైనా అడగండి.")
-        
-        if "messages" not in st.session_state:
-            st.session_state.messages = []
-
-        for msg in st.session_state.messages:
-            st.chat_message(msg["role"]).write(msg["content"])
-
-        if prompt := st.chat_input("Ask your technical doubt..."):
-            st.chat_message("user").write(prompt)
-            st.session_state.messages.append({"role": "user", "content": prompt})
-            
+        try:
             smart_prompt = prompt + " (Reply in English. Keep it simple and easy to understand for an engineering student.)"
-            response = model.generate_content(smart_prompt)
+            
+            # ఫోటో ఉంటే ఫోటోతో సహా గూగుల్ కి పంపుతాం
+            if img_to_send:
+                response = model.generate_content([smart_prompt, img_to_send])
+            else:
+                response = model.generate_content(smart_prompt)
             
             st.chat_message("assistant").write(response.text)
             st.session_state.messages.append({"role": "assistant", "content": response.text})
-            
-    except Exception as e:
-        st.error(f"ఎర్రర్ ఇదీ బాస్: {e}")
+        except Exception as e:
+            st.error(f"ఎర్రర్ ఇదీ బాస్: {e}")
 
-# --- ఆప్షన్ 2: నోట్స్ ఫీచర్ ---
+# --- ఆప్షన్ 2: నోట్స్ ---
 elif app_mode == "📚 Exam Hacker (Notes)":
     st.header("📚 Exam Hacker: Smart Notes")
-    st.info("ఈ ఫీచర్ త్వరలో వస్తుంది బాస్! ఎగ్జామ్స్ ముందు సిలబస్ ని షార్ట్ నోట్స్ గా మార్చే ట్రిక్ ఇక్కడ యాడ్ చేద్దాం.")
+    st.info("ఈ ఫీచర్ డెవలప్‌మెంట్‌లో ఉంది బాస్!")
 
 # --- ఆప్షన్ 3: ప్లేస్‌మెంట్స్ ---
 elif app_mode == "💼 Placement Prep":
     st.header("💼 Placement & Interview Prep")
-    st.info("ఈ ఫీచర్ డెవలప్‌మెంట్‌లో ఉంది. త్వరలో రెజ్యూమె బిల్డింగ్ అండ్ ఇంటర్వ్యూ టిప్స్ వస్తాయి!")
+    st.info("ఈ ఫీచర్ డెవలప్‌మెంట్‌లో ఉంది బాస్!")
 
 # --- ఆప్షన్ 4: ఈవెంట్ ప్లానర్ ---
 elif app_mode == "🎪 Event Planner":
     st.header("🎪 Technical Event & Workshop Planner")
-    st.info("ఈ ఫీచర్ ఇంకా డెవలప్‌మెంట్‌లో ఉంది బాస్! ఫ్యూచర్ లో మీరు సాయి స్ఫూర్తి ఇన్‌స్టిట్యూట్‌లో హిమాన్షు కుమార్ గారితో PLC వర్క్‌షాప్ లాంటి ఈవెంట్స్ ఆర్గనైజ్ చేసేటప్పుడు, కావాల్సిన పోస్టర్ డిజైన్స్, ప్రమోషనల్ వీడియో స్క్రిప్ట్స్ అన్నీ ఈ బడ్డీనే ఆటోమేటిక్‌గా ప్లాన్ చేసి ఇస్తుంది.")
+    st.info("ఈ ఫీచర్ డెవలప్‌మెంట్‌లో ఉంది బాస్!")
