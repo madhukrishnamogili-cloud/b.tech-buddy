@@ -3,7 +3,7 @@ import google.generativeai as genai
 from PIL import Image
 
 # 1. ఇక్కడ మీ AIza... కీ పర్మనెంట్ గా ఇవ్వండి
-GOOGLE_API_KEY = "AQ.Ab8RN6Jy4r-iCHqbNbl-5TmQOoDwK2Hdm8Pu6xgH1F1exsG-Nw"
+GOOGLE_API_KEY = "AQ.Ab8RN6L8o3LNHF0t02xQz640oWR4bcoQt6dJyPkv_HsbOmrRzQ"
 
 st.set_page_config(page_title="B.Tech Buddy", page_icon="🎓", layout="wide")
 
