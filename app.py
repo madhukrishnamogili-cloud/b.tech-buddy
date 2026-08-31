@@ -2,32 +2,72 @@ import streamlit as st
 import google.generativeai as genai
 from PIL import Image
 
-# 1. ఇక్కడ మీ AIza... కీ పర్మనెంట్ గా ఇవ్వండి
+# 1. పేజీ సెటప్ ఎప్పుడూ పైనే ఉండాలి!
+st.set_page_config(page_title="My Smart App", page_icon="🚀", layout="wide")
+
+# 2. మీ API కీ ఇక్కడ ఇవ్వండి (AIzaSy...)
 GOOGLE_API_KEY = "AQ.Ab8RN6L8o3LNHF0t02xQz640oWR4bcoQt6dJyPkv_HsbOmrRzQ"
 
-st.set_page_config(page_title="B.Tech Buddy", page_icon="🎓", layout="wide")
+# --- సెషన్ స్టేట్ (మెమరీ) సెటప్ ---
+if "logged_in" not in st.session_state:
+    st.session_state.logged_in = False
+if "app_name" not in st.session_state:
+    st.session_state.app_name = "B.Tech Buddy 🎓"
+if "app_logo" not in st.session_state:
+    st.session_state.app_logo = "https://cdn-icons-png.flaticon.com/512/3135/3135715.png"
 
+# --- 🔐 లాగిన్ పేజీ (First Screen) ---
+if not st.session_state.logged_in:
+    st.markdown("<h1 style='text-align: center;'>🔐 Login to Continue</h1>", unsafe_allow_html=True)
+    st.markdown("<p style='text-align: center;'>Please enter your email and password to access the app.</p>", unsafe_allow_html=True)
+    
+    col1, col2, col3 = st.columns([1,2,1])
+    with col2:
+        email_input = st.text_input("📧 Email Address")
+        password_input = st.text_input("🔑 Password", type="password")
+        
+        if st.button("🚀 Login / Enter App", use_container_width=True):
+            if email_input != "" and password_input != "":
+                # ఇక్కడ ఈమెయిల్ ఇచ్చి లాగిన్ నొక్కితేనే యాప్ ఓపెన్ అవుతుంది!
+                st.session_state.logged_in = True
+                st.rerun()
+            else:
+                st.error("బాస్, ఈమెయిల్ మరియు పాస్‌వర్డ్ కచ్చితంగా ఇవ్వాలి!")
+    st.stop() # లాగిన్ అవ్వకపోతే కింద ఉన్న కోడ్ రన్ అవ్వదు (సెక్యూరిటీ)
+
+# --- 📱 మెయిన్ యాప్ (లాగిన్ అయ్యాక ఓపెన్ అవుతుంది) ---
 try:
     genai.configure(api_key=GOOGLE_API_KEY)
 except Exception as e:
-    st.error("బాస్, API Key కరెక్ట్‌గా ఉందో లేదో చెక్ చేయండి!")
+    pass
 
-# ఎడమవైపు సైడ్‌బార్
+# ఎడమవైపు సైడ్‌బార్ 
 with st.sidebar:
-    st.image("https://cdn-icons-png.flaticon.com/512/3135/3135715.png", width=100)
-    st.title("B.Tech Buddy 🎓")
-    app_mode = st.radio("Select Feature:", ["🤖 Project & Lab Guide", "📚 Exam Hacker (Notes)", "💼 Placement Prep", "🎪 Event Planner"])
+    st.image(st.session_state.app_logo, width=100)
+    st.title(st.session_state.app_name)
+    
+    # ⚙️ యాప్ పేరు, లోగో మార్చుకునే స్పెషల్ ఆప్షన్!
+    with st.expander("⚙️ App Settings (Rename & Logo)"):
+        new_name = st.text_input("Change App Name:", st.session_state.app_name)
+        new_logo = st.text_input("Change Logo (Image URL):", st.session_state.app_logo)
+        if st.button("Save Changes"):
+            st.session_state.app_name = new_name
+            st.session_state.app_logo = new_logo
+            st.rerun()
+            
     st.divider()
-    # పాత చాట్ తుడిపేయడానికి క్లియర్ బటన్ ఇక్కడ పెట్టాను
-    if st.button("🗑️ Clear Chat History"):
-        st.session_state.messages = []
+    app_mode = st.radio("Select Feature:", ["🤖 Project & Lab Guide", "📚 Exam Hacker", "💼 Placement Prep"])
+    st.divider()
+    
+    # లాగౌట్ బటన్
+    if st.button("🚪 Logout"):
+        st.session_state.logged_in = False
         st.rerun()
 
-# --- ఆప్షన్ 1: ప్రాజెక్ట్ & ల్యాబ్ గైడ్ ---
+# --- ఆప్షన్ 1: ప్రాజెక్ట్ & ల్యాబ్ గైడ్ (మీ పాత ఫీచర్లు అన్నీ) ---
 if app_mode == "🤖 Project & Lab Guide":
-    st.header("🤖 Smart Project & Lab Guide")
+    st.header(f"🤖 Welcome to {st.session_state.app_name}")
     
-    # --- బ్రెయిన్ సెలెక్ట్ డ్రాప్‌డౌన్ (మెయిన్ స్క్రీన్‌లో) ---
     available_models = []
     try:
         for m in genai.list_models():
@@ -42,8 +82,6 @@ if app_mode == "🤖 Project & Lab Guide":
         selected_model = st.selectbox("🧠 బ్రెయిన్ సెలెక్ట్ చేసుకోండి:", available_models, index=default_idx)
     
     model = genai.GenerativeModel(selected_model)
-
-    st.markdown("EEE సర్క్యూట్స్, కాంపోనెంట్స్ ఫోటో తీసి అడగండి. నేను పాత ప్రశ్నలు కూడా గుర్తుపెట్టుకుంటాను!")
 
     tab1, tab2, tab3 = st.tabs(["💬 Text Only", "🖼️ Upload Photo", "📸 Take Camera Photo"])
     img_to_send = None
@@ -61,23 +99,18 @@ if app_mode == "🤖 Project & Lab Guide":
             img_to_send = Image.open(camera_photo)
             st.image(img_to_send, caption="తీసిన ఫోటో", width=300)
 
-    # చాట్ హిస్టరీ (మెమరీ) సెటప్
     if "messages" not in st.session_state:
         st.session_state.messages = []
 
-    # పాత మెసేజ్‌లు స్క్రీన్ మీద చూపించడానికి
     for msg in st.session_state.messages:
         st.chat_message(msg["role"]).write(msg["content"])
 
-    # కొత్త ప్రశ్న అడగడం
-    if prompt := st.chat_input("Ask your technical doubt..."):
+    if prompt := st.chat_input("Ask your doubt..."):
         st.chat_message("user").write(prompt)
         
-        with st.spinner("బడ్డీ ఆలోచిస్తోంది... ⏳"):
+        with st.spinner("ఆలోచిస్తోంది... ⏳"):
             try:
-                smart_prompt = prompt + " (Reply in English. Keep it simple and easy to understand for an engineering student.)"
-                
-                # కంటిన్యూస్ చాట్ (మెమరీ) లాజిక్
+                smart_prompt = prompt + " (Reply in English. Keep it simple.)"
                 gemini_history = []
                 for msg in st.session_state.messages:
                     role = "user" if msg["role"] == "user" else "model"
@@ -95,20 +128,13 @@ if app_mode == "🤖 Project & Lab Guide":
                     st.chat_message("assistant").write(response.text)
                     st.session_state.messages.append({"role": "user", "content": prompt})
                     st.session_state.messages.append({"role": "assistant", "content": response.text})
-                else:
-                    st.error("రెస్పాన్స్ సరిగ్గా రాలేదు. దయచేసి మళ్ళీ ప్రయత్నించండి.")
             except Exception as e:
                 st.error(f"ఎర్రర్ వచ్చింది బాస్: {e}")
 
-# --- మిగతా ఫీచర్లు ---
-elif app_mode == "📚 Exam Hacker (Notes)":
-    st.header("📚 Exam Hacker: Smart Notes")
-    st.info("ఈ ఫీచర్ డెవలప్‌మెంట్‌లో ఉంది బాస్!")
+elif app_mode == "📚 Exam Hacker":
+    st.header("📚 Exam Hacker")
+    st.info("Coming soon!")
 
 elif app_mode == "💼 Placement Prep":
-    st.header("💼 Placement & Interview Prep")
-    st.info("ఈ ఫీచర్ డెవలప్‌మెంట్‌లో ఉంది బాస్!")
-
-elif app_mode == "🎪 Event Planner":
-    st.header("🎪 Technical Event & Workshop Planner")
-    st.info("ఈ ఫీచర్ డెవలప్‌మెంట్‌లో ఉంది బాస్!")
+    st.header("💼 Placement Prep")
+    st.info("Coming soon!")
