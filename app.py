@@ -4,11 +4,11 @@ from PIL import Image
 
 st.set_page_config(page_title="My Smart App", page_icon="🚀", layout="wide")
 
-# 1. ఇక్కడ మీ API కీ మరియు అడ్మిన్ ఈమెయిల్ ఇవ్వండి
+# 1. 🔑 మీ డీటెయిల్స్ ఇక్కడ పక్కాగా ఇవ్వండి
 GOOGLE_API_KEY = "AQ.Ab8RN6L8o3LNHF0t02xQz640oWR4bcoQt6dJyPkv_HsbOmrRzQ"
-ADMIN_EMAIL = "madhukrishnamogiili@gmail.com" 
+ADMIN_EMAIL = "madhuukrishnamogili@gmail.com" 
 
-# --- 🚀 One-Time Login (Persistent) లాజిక్ ---
+# --- 🚀 One-Time Login (Persistent) ---
 if "user" in st.query_params:
     st.session_state.logged_in = True
     st.session_state.user_email = st.query_params["user"]
@@ -41,19 +41,21 @@ if not st.session_state.logged_in:
                 st.error("బాస్, ఈమెయిల్ మరియు పాస్‌వర్డ్ కచ్చితంగా ఇవ్వాలి!")
     st.stop()
 
-# --- 📱 మెయిన్ యాప్ ---
+# --- 📱 మెయిన్ యాప్ ప్రారంభం ---
 try:
     genai.configure(api_key=GOOGLE_API_KEY)
 except Exception as e:
-    pass
+    st.error("API Key కనెక్ట్ అవ్వలేదు బాస్!")
 
+# ⬅️ సైడ్‌బార్ & ⚙️ అడ్మిన్ సెట్టింగ్స్
 with st.sidebar:
     st.image(st.session_state.app_logo, width=100)
     st.title(st.session_state.app_name)
     
-    # 👑 అడ్మిన్ యాక్సెస్ 
+    # 👑 అడ్మిన్ యాక్సెస్ (మీ ఈమెయిల్ అయితేనే ఇది ఓపెన్ అవుతుంది)
     if st.session_state.user_email == ADMIN_EMAIL:
         with st.expander("⚙️ Admin Settings (Only for you)"):
+            st.info("యాప్ ఓనర్ సెట్టింగ్స్")
             new_name = st.text_input("Change App Name:", st.session_state.app_name)
             new_logo = st.text_input("Change Logo URL:", st.session_state.app_logo)
             if st.button("Save Changes"):
@@ -62,8 +64,7 @@ with st.sidebar:
                 st.rerun()
                 
     st.divider()
-    # ఇక్కడ Event Planner యాడ్ చేశాను
-    app_mode = st.radio("Select Feature:", ["🤖 Project & Lab Guide", "📚 Exam Hacker", "💼 Placement Prep", "🎪 Event Planner"])
+    app_mode = st.radio("Select Feature:", ["🤖 Project & Lab Guide", "🎪 Event Planner", "📚 Exam Hacker", "💼 Placement Prep"])
     st.divider()
     
     if st.button("🚪 Logout"):
@@ -72,24 +73,26 @@ with st.sidebar:
         st.query_params.clear()
         st.rerun()
 
-# --- ఆప్షన్ 1: ప్రాజెక్ట్ గైడ్ ---
+# --- ఆప్షన్ 1: ప్రాజెక్ట్ గైడ్ & 🧠 బ్రెయిన్ ఆప్షన్ ---
 if app_mode == "🤖 Project & Lab Guide":
-    st.header(f"🤖 Welcome to {st.session_state.app_name}")
+    st.header(f"🤖 {st.session_state.app_name} Lab Guide")
     
-    available_models = []
+    # 🧠 బ్రెయిన్ ఆప్షన్ (దీన్ని పక్కాగా వచ్చేలా సెట్ చేశాను)
+    available_models = ["models/gemini-1.5-flash", "models/gemini-1.5-pro"] # సర్వర్ పనిచేయకపోతే డీఫాల్ట్ లిస్ట్
     try:
+        fetched_models = []
         for m in genai.list_models():
             if 'generateContent' in m.supported_generation_methods:
-                available_models.append(m.name)
+                fetched_models.append(m.name)
+        if fetched_models:
+            available_models = fetched_models # సర్వర్ పనిచేస్తే లైవ్ లిస్ట్
     except Exception as e:
         pass
     
-    selected_model = "models/gemini-1.5-flash"
-    if available_models:
-        default_idx = available_models.index("models/gemini-1.5-flash") if "models/gemini-1.5-flash" in available_models else 0
-        selected_model = st.selectbox("🧠 బ్రెయిన్ సెలెక్ట్ చేసుకోండి:", available_models, index=default_idx)
-    
+    selected_model = st.selectbox("🧠 బ్రెయిన్ సెలెక్ట్ చేసుకోండి:", available_models, index=0)
     model = genai.GenerativeModel(selected_model)
+
+    st.markdown("EEE సర్క్యూట్స్, కాంపోనెంట్స్ ఫోటో తీసి అడగండి.")
 
     tab1, tab2, tab3 = st.tabs(["💬 Text Only", "🖼️ Upload Photo", "📸 Take Camera Photo"])
     img_to_send = None
@@ -116,7 +119,7 @@ if app_mode == "🤖 Project & Lab Guide":
     if prompt := st.chat_input("Ask your doubt..."):
         st.chat_message("user").write(prompt)
         
-        with st.spinner("ఆలోచిస్తోంది... ⏳"):
+        with st.spinner(f"{selected_model} ఆలోచిస్తోంది... ⏳"):
             try:
                 smart_prompt = prompt + " (Reply in English. Keep it simple.)"
                 gemini_history = []
@@ -139,7 +142,11 @@ if app_mode == "🤖 Project & Lab Guide":
             except Exception as e:
                 st.error(f"ఎర్రర్ వచ్చింది బాస్: {e}")
 
-# --- ఆప్షన్ 2 & 3 ---
+# --- ఆప్షన్ 2: ఈవెంట్ ప్లానర్ ---
+elif app_mode == "🎪 Event Planner":
+    st.header("🎪 Technical Event & Workshop Planner")
+    st.info("వర్క్‌షాప్స్ కోసం ఐడియాస్ ఇక్కడ ప్లాన్ చేసుకోండి!")
+
 elif app_mode == "📚 Exam Hacker":
     st.header("📚 Exam Hacker")
     st.info("Coming soon!")
@@ -147,30 +154,3 @@ elif app_mode == "📚 Exam Hacker":
 elif app_mode == "💼 Placement Prep":
     st.header("💼 Placement Prep")
     st.info("Coming soon!")
-
-# --- ఆప్షన్ 4: ఈవెంట్ ప్లానర్ (కొత్త ఫీచర్) ---
-elif app_mode == "🎪 Event Planner":
-    st.header("🎪 Technical Event & Workshop Planner")
-    st.markdown("వర్క్‌షాప్స్ కోసం ప్రమోషనల్ స్క్రిప్ట్స్, పోస్టర్ డిజైన్ ప్రాంప్ట్స్ ఇక్కడ క్రియేట్ చేసుకోండి.")
-    
-    with st.form("event_form"):
-        col1, col2 = st.columns(2)
-        with col1:
-            event_name = st.text_input("Workshop Name (ఉదా: PLC Automation Workshop)")
-            trainer_name = st.text_input("Trainer/Guest Name (ఉదా: Himanshu Kumar)")
-        with col2:
-            event_date = st.text_input("Dates (ఉదా: Aug 17 & 18)")
-            target_audience = st.text_input("Target Audience (ఉదా: EEE Final Year Students)")
-            
-        submit_btn = st.form_submit_button("Generate Promo Ideas 🚀")
-        
-    if submit_btn and event_name:
-        with st.spinner("ఐడియాస్ రెడీ చేస్తున్నాను... ⏳"):
-            try:
-                ep_model = genai.GenerativeModel("gemini-1.5-flash")
-                ep_prompt = f"Create a short, energetic promotional script in Telugu for a college workshop named '{event_name}' conducted by '{trainer_name}' on '{event_date}' for '{target_audience}'. Also, provide 2 highly detailed image generation prompts (specifying cinematic lighting, 16:9 aspect ratio, and camera angles) to design a poster for this event."
-                ep_response = ep_model.generate_content(ep_prompt)
-                st.success("ఐడియాస్ రెడీ!")
-                st.write(ep_response.text)
-            except Exception as e:
-                st.error("ఎర్రర్ వచ్చింది బాస్, పైన బ్రెయిన్ కనెక్ట్ అయ్యిందో లేదో చూడండి.")
