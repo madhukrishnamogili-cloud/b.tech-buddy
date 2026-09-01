@@ -7,7 +7,7 @@ from PIL import Image
 st.set_page_config(page_title="Tech Mithra 🎓", page_icon="🚀", layout="wide")
 
 # 1. 🔑 డీఫాల్ట్ సెట్టింగ్స్
-DEFAULT_API_KEY = "AQ.Ab8RN6ICaRiOZNJW3Xa98QXl6FkIcGmuFC76KTdMFlm2TMaavA"
+DEFAULT_API_KEY = "AQ.Ab8RN6JoMlJ37PuLg3trHWk23E4_WXE4kF07cHvYf6ieA3E-Tg"
 ADMIN_EMAIL = "madhukrishnamogili@gmail.com" 
 
 # --- మెమరీ సెటప్ ---
@@ -39,8 +39,6 @@ if not st.session_state.logged_in:
                 st.session_state.user_email = email_input
                 st.query_params["user"] = email_input 
                 st.rerun()
-            else:
-                st.error("బాస్, ఈమెయిల్ మరియు పాస్‌వర్డ్ కచ్చితంగా ఇవ్వాలి!")
     st.stop()
 
 # --- ⚙️ సైడ్‌బార్ & అడ్మిన్ సెట్టింగ్స్ ---
@@ -86,7 +84,7 @@ def call_gemini_api(api_key, model_name, prompt, image_obj=None):
     else:
         url += f"?key={api_key}"
         
-    parts = [{"text": prompt + " (Provide detailed, structured academic answers in English.)"}]
+    parts = [{"text": prompt}]
     
     if image_obj is not None:
         buffered = BytesIO()
@@ -121,8 +119,6 @@ if app_mode == "🤖 Project & Lab Guide":
     tab1, tab2, tab3 = st.tabs(["💬 Text Only", "🖼️ Upload Photo", "📸 Take Camera Photo"])
     img_to_send = None
 
-    with tab1:
-        st.info("💡 ప్రశ్న టైప్ చేయండి లేదా ఫోటో అప్‌లోడ్ చేసి ఆన్సర్స్ పొందండి.")
     with tab2:
         uploaded_file = st.file_uploader("గ్యాలరీ నుంచి ఫోటో అప్‌లోడ్ చేయండి", type=["jpg", "jpeg", "png"])
         if uploaded_file:
@@ -140,7 +136,7 @@ if app_mode == "🤖 Project & Lab Guide":
     for msg in st.session_state.messages:
         st.chat_message(msg["role"]).write(msg["content"])
 
-    if prompt := st.chat_input("Ask your doubt or type 'Answers'..."):
+    if prompt := st.chat_input("Ask your doubt (Type 'Answers' for exam notes)..."):
         st.chat_message("user").write(prompt)
         
         with st.spinner("ఆలోచిస్తోంది... ⏳"):
@@ -150,41 +146,26 @@ if app_mode == "🤖 Project & Lab Guide":
             if current_key and current_key != "ఇక్కడ_మీ_AQ_లేదా_AIza_కీ_పేస్ట్_చేయండి":
                 reply_text = call_gemini_api(current_key, selected_model, prompt, img_to_send)
             
-            # ఒకవేళ ఏపీఐ కీ ఫెయిల్ అయితే, ఫోటోలోని ప్రశ్నలకు నేరుగా కింది పర్ఫెక్ట్ ఆన్సర్స్ ఇస్తుంది
+            # --- 🧠 స్మార్ట్ బ్యాకప్ ఆన్సర్స్ (డైనమిక్) ---
             if not reply_text:
-                reply_text = """### 📚 Detailed Answers for Your Uploaded Questions:
-
-**1. Definition and Evaluation of Professional Ethics:**
-* **Definition:** Professional ethics comprises principles governing the behavior of a person or group in a business environment, ensuring integrity, accountability, and fairness.
-* **Evaluation:** It fosters trust between clients and professionals, maintains industry standards, and prevents legal repercussions by discouraging fraudulent practices.
-
-**2. Environmental Breaches in Detail:**
-* **Definition:** Violations of environmental laws, regulations, or permits designed to protect natural resources and human health.
-* **Key Areas:** Unauthorized industrial waste dumping, illegal deforestation, exceeding carbon emission limits, and water pollution. Consequences include heavy penalties, corporate liability, and ecosystem degradation.
-
-**3. Analysis of GST and Recent Reforms in India:**
-* **Overview:** Goods and Services Tax (GST) is a comprehensive indirect tax introduced in India to replace multiple cascading taxes like VAT, excise duty, and service tax.
-* **Recent Reforms:** Introduction of e-invoicing for B2B transactions, tightening norms for input tax credit (ITC) matching, automated scrutiny, and anti-evasion measures to boost tax transparency and revenue collection.
-
-**4. Definition of Contract and Essential Elements of a Valid Contract:**
-* **Definition:** According to Section 2(h) of the Indian Contract Act, 1872, an agreement enforceable by law is a contract.
-* **Essential Elements:** Offer and acceptance, lawful consideration, capacity of parties to contract (competency), free consent, lawful object, and certainty/possibility of performance.
-
-**5. Remedies for Breach of Contract:**
-* **Damages:** Monetary compensation awarded to the injured party for loss suffered.
-* **Rescission:** Cancellation of the contract, releasing parties from obligations.
-* **Specific Performance:** Court order directing the defaulting party to perform their specific promise.
-* **Injunction:** Court order restraining a party from doing a particular act.
-* **Quantum Meruit:** Claiming payment for work already done proportionate to the work completed.
-
-**6. General Principles of the Sale of Goods Act, 1930:**
-* **Definition:** Governs contracts relating to the sale of goods where the seller transfers or agrees to transfer property in goods to the buyer for a price.
-* **Key Principles:** Distinction between sale and agreement to sell, doctrine of *Caveat Emptor* (let the buyer beware), conditions and warranties, and rights of an unpaid seller.
-
-**7. Arbitration - Scope and Types:**
-* **Definition:** A form of Alternative Dispute Resolution (ADR) where disputes are submitted to one or more arbitrators whose decision is binding.
-* **Scope:** Commercial disputes, civil matters, contractual disagreements, avoiding lengthy court trials.
-* **Types:** Domestic Arbitration, International Commercial Arbitration, Institutional Arbitration, and Ad-hoc Arbitration."""
+                text_lower = prompt.lower()
+                if "answers" in text_lower or "exam" in text_lower:
+                    reply_text = """### 📚 Detailed Answers for Your Uploaded Questions:
+**1. Professional Ethics:** Principles governing behavior in a business environment.
+**2. Environmental Breaches:** Violations of environmental laws like illegal dumping.
+**3. GST Reforms:** Introduction of e-invoicing and ITC matching in India.
+**4. Valid Contract:** Agreement enforceable by law (Offer, acceptance, consideration).
+**5. Breach Remedies:** Damages, Rescission, Specific Performance.
+**6. Sale of Goods Act:** Governs contracts relating to the sale of goods.
+**7. Arbitration:** Out-of-court dispute resolution by an arbitrator."""
+                elif "plc" in text_lower:
+                    reply_text = "PLC (Programmable Logic Controller) అనేది ఇండస్ట్రియల్ ఆటోమేషన్ లో వాడే కంప్యూటర్. దీన్ని లాడర్ లాజిక్ తో ప్రోగ్రామ్ చేస్తారు."
+                elif "python" in text_lower:
+                    reply_text = "Python ఒక పాపులర్ ప్రోగ్రామింగ్ లాంగ్వేజ్. దీన్ని AI, వెబ్ డెవలప్‌మెంట్ లో వాడతారు."
+                elif "hi" in text_lower or "hello" in text_lower:
+                    reply_text = "హలో బాస్! నేను రెడీ. మీ డౌట్ ఏంటో అడగండి."
+                else:
+                    reply_text = f"*(Offline Mode)*: బాస్, మీరు '{prompt}' గురించి అడిగారు. నా ఏపీఐ కీ కనెక్ట్ అవ్వలేదు కాబట్టి దీనిపై నా దగ్గర పూర్తి సమాచారం లేదు. (దయచేసి వర్కింగ్ కీ ఇవ్వండి)."
 
             st.chat_message("assistant").write(reply_text)
             st.session_state.messages.append({"role": "user", "content": prompt})
@@ -192,12 +173,12 @@ if app_mode == "🤖 Project & Lab Guide":
 
 elif app_mode == "🎪 Event Planner":
     st.header("🎪 Technical Event & Workshop Planner")
-    st.info("ఈవెంట్స్ మరియు వర్క్‌షాప్స్ ప్లానింగ్.")
+    st.info("ఈవెంట్స్ ప్లాన్ చేసుకోవడానికి ఇది ఉపయోగపడుతుంది.")
 
 elif app_mode == "📚 Exam Hacker":
     st.header("📚 Exam Hacker")
-    st.info("ఎగ్జామ్ ప్రిపరేషన్ మరియు ఇంపార్టెంట్ నోట్స్.")
+    st.info("ఎగ్జామ్ ప్రిపరేషన్ నోట్స్.")
 
 elif app_mode == "💼 Placement Prep":
     st.header("💼 Placement Prep")
-    st.info("ఇంటర్వ్యూ గైడ్ మరియు ప్రిపరేషన్.")
+    st.info("ఇంటర్వ్యూ గైడ్.")
