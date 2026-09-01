@@ -5,7 +5,7 @@ from PIL import Image
 st.set_page_config(page_title="Tech Mithra 🎓", page_icon="🚀", layout="wide")
 
 # 1. 🔑 మీ జెమినీ ఏపీఐ కీ ఇక్కడ ఇవ్వండి (లేదా అడ్మిన్ సెట్టింగ్స్ లో మార్చుకోండి)
-DEFAULT_API_KEY = "AQ.Ab8RN6Iv9xVQzh_jhntNsaEimd9bnmNjWni1XnvF8Wuf2M1PsA"
+DEFAULT_API_KEY = "AQ.Ab8RN6JykM1zJkSLPdeI-6wBttjtSwexPHQyQZKAjYhMPfWPwg"
 ADMIN_EMAIL = "madhukrishnamogili@gmail.com" 
 
 # --- మెమరీ (Session State) ---
