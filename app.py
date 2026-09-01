@@ -6,16 +6,13 @@ from PIL import Image
 
 st.set_page_config(page_title="Tech Mithra AI 🎓", page_icon="🚀", layout="wide")
 
-# 1. 🔑 మీ AQ టోకెన్ మరియు ప్రాజెక్ట్ ఐడీ ఇక్కడ ఇవ్వండి
+# 1. 🔑 మీ AQ టోకెన్ ఇక్కడ ఇవ్వండి
 DEFAULT_AQ_TOKEN = "AQ.Ab8RN6KrgG_0pF8ATLEw5QHMrgXLEr7LD_9FYw_rcgFcqBSXHw"
-DEFAULT_PROJECT_ID = "tech-mithra-ai"
-ADMIN_EMAIL = "admin@gmail.com" 
+ADMIN_EMAIL = "madhukrishnamogili@gmail.com" 
 
 # --- మెమరీ సెటప్ ---
 if "api_key" not in st.session_state:
     st.session_state.api_key = DEFAULT_AQ_TOKEN
-if "project_id" not in st.session_state:
-    st.session_state.project_id = DEFAULT_PROJECT_ID
 if "app_name" not in st.session_state:
     st.session_state.app_name = "Tech Mithra AI 🎓"
 if "app_logo" not in st.session_state:
@@ -46,7 +43,7 @@ if not st.session_state.logged_in:
                 st.error("బాస్, ఈమెయిల్ మరియు పాస్‌వర్డ్ కచ్చితంగా ఇవ్వాలి!")
     st.stop()
 
-# --- ⚙️ సైడ్‌బార్ & అడ్మిన్ సెట్టింగ్స్ (AQ టోకెన్ & ప్రాజెక్ట్ ఐడీ కోసం) ---
+# --- ⚙️ సైడ్‌బార్ & అడ్మిన్ సెట్టింగ్స్ ---
 with st.sidebar:
     st.image(st.session_state.app_logo, width=100)
     st.title(st.session_state.app_name)
@@ -56,13 +53,11 @@ with st.sidebar:
             new_name = st.text_input("App Name:", st.session_state.app_name)
             new_logo = st.text_input("Logo URL:", st.session_state.app_logo)
             new_token = st.text_input("AQ Token / Bearer Token:", st.session_state.api_key, type="password")
-            new_proj = st.text_input("GCP Project ID:", st.session_state.project_id)
             
             if st.button("💾 Save Settings"):
                 st.session_state.app_name = new_name
                 st.session_state.app_logo = new_logo
                 st.session_state.api_key = new_token
-                st.session_state.project_id = new_proj
                 st.rerun()
                 
     st.divider()
@@ -80,15 +75,12 @@ with st.sidebar:
         st.query_params.clear()
         st.rerun()
 
-# --- 🛠️ AQ టోకెన్ (Bearer Token) కి సరిగ్గా పనిచేసే Vertex AI / Gemini REST API ఫంక్షన్ ---
-def call_aq_vertex_api(token, project_id, model_name, prompt, image_obj=None):
-    # ఒకవేళ ప్రాజెక్ట్ ఐడీ ఇవ్వకపోతే జనరల్ జెమినీ ఎండ్‌పాయింట్ కి బేరర్ టోకెన్ తో హిట్ చేస్తుంది
-    if not project_id or project_id == "మీ_గూగుల్_క్లౌడ్_ప్రాజెక్ట్_ఐడీ_ఇక్కడ_ఇవ్వండి":
-        clean_model = model_name.replace("models/", "")
-        url = f"https://generativelanguage.googleapis.com/v1beta/models/{clean_model}:generateContent"
-    else:
-        # ప్రాజెక్ట్ ఐడీ ఉంటే గూగుల్ క్లౌడ్ Vertex AI రీజినల్ ఎండ్‌పాయింట్ వాడతాం (AQ టోకెన్లకి ఇది పర్ఫెక్ట్ సెట్ అవుతుంది)
-        url = f"https://us-central1-aiplatform.googleapis.com/v1/projects/{project_id}/locations/us-central1/publishers/google/models/{model_name}:generateContent"
+# --- 🛠️ AQ టోకెన్ కోసం పర్ఫెక్ట్ అండ్ డైరెక్ట్ জెమినీ రెస్ట్ API ఫంక్షన్ ---
+def call_gemini_with_aq_token(token, model_name, prompt, image_obj=None):
+    clean_model = model_name.replace("models/", "")
+    
+    # నేరుగా స్టాండర్డ్ జెమినీ వన్-బీటా ఎండ్‌పాయింట్ వాడతాం (ఇది AQ బేరర్ టోకెన్లను సపోర్ట్ చేస్తుంది)
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/{clean_model}:generateContent"
 
     headers = {
         "Content-Type": "application/json",
@@ -97,7 +89,6 @@ def call_aq_vertex_api(token, project_id, model_name, prompt, image_obj=None):
         
     parts = [{"text": prompt}]
     
-    # ఫోటో లేదా కెమెరా ఇమేజ్ ఉంటే దాన్ని జోడించడం
     if image_obj is not None:
         buffered = BytesIO()
         image_obj.save(buffered, format="JPEG")
@@ -117,7 +108,7 @@ def call_aq_vertex_api(token, project_id, model_name, prompt, image_obj=None):
             res_json = response.json()
             return res_json["candidates"][0]["content"]["parts"][0]["text"]
         else:
-            return f"⚠️ API ఎర్రర్ ({response.status_code}): {response.text}\n\n*(గమనిక: మీ AQ టోకెన్ ఎక్స్‌పైర్ అయి ఉండవచ్చు లేదా సరైన Project ID అవసరం ఉండవచ్చు.)*"
+            return f"⚠️ API ఎర్రర్ ({response.status_code}): {response.text}\n\n*(గమనిక: మీ AQ టోకెన్ గడువు ముగిసి ఉండవచ్చు. దయచేసి కొత్త టోకెన్ జనరేట్ చేసి ఇవ్వండి.)*"
     except Exception as e:
         return f"⚠️ కనెక్షన్ ఎర్రర్: {e}"
 
@@ -153,18 +144,17 @@ if app_mode == "🤖 Project & Lab Guide":
     for msg in st.session_state.messages:
         st.chat_message(msg["role"]).write(msg["content"])
 
-    if prompt := st.chat_input("Ask anything with your AQ Token..."):
+    if prompt := st.chat_input("Ask anything..."):
         st.chat_message("user").write(prompt)
         st.session_state.messages.append({"role": "user", "content": prompt})
         
-        with st.spinner("AQ టోకెన్‌తో కమ్యూనికేట్ అవుతోంది... ⏳"):
+        with st.spinner("లైవ్ ఏఐ రెస్పాన్స్ తెస్తోంది... ⏳"):
             current_token = st.session_state.api_key
-            current_proj = st.session_state.project_id
             
             if not current_token or current_token == "ఇక్కడ_మీ_AQ_టోకెన్_పేస్ట్_చేయండి":
-                reply_text = "⚠️ దయచేసి అడ్మిన్ సెట్టింగ్స్‌లో మీ বৈধ AQ Token ఇవ్వండి."
+                reply_text = "⚠️ దయచేసి అడ్మిన్ సెట్టింగ్స్‌లో మీ AQ Token ఇవ్వండి."
             else:
-                reply_text = call_aq_vertex_api(current_token, current_proj, selected_model, prompt, img_to_send)
+                reply_text = call_gemini_with_aq_token(current_token, selected_model, prompt, img_to_send)
 
             st.chat_message("assistant").write(reply_text)
             st.session_state.messages.append({"role": "assistant", "content": reply_text})
