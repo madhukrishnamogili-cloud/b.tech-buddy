@@ -161,8 +161,8 @@ if app_mode == "🤖 Project & Lab Guide":
             st.session_state.messages.append({"role": "assistant", "content": reply_text})
 
 # --- ఆప్షన్ 2: ఈవెంట్ ప్లానర్ ---
-elif app_mode == "🖼️ Event Planner":
-    st.header("🖼️ Technical Event & Workshop Planner")
+elif app_mode == "🎪 Event Planner":
+    st.header("🎪 Technical Event & Workshop Planner")
     st.info("వర్క్‌షాప్స్ (ఉదాహరణకు: PLC ట్రైనింగ్) ప్రమోషనల్ స్క్రిప్ట్స్ ఇక్కడ ప్లాన్ చేసుకోండి!")
     workshop_name = st.text_input("Workshop Name:", "PLC Automation Workshop")
     if st.button("Generate Promo Script"):
