@@ -86,10 +86,15 @@ if app_mode == "🤖 Project & Lab Guide":
     st.header(f"🤖 {st.session_state.app_name} Lab Guide")
     
     available_models = [
-        "gemini-1.5-flash",
-        "gemini-1.5-pro",
-        "gemini-2.5-flash",
-        "gemini-2.5-pro"
+        "models/gemini-2.5-flash",
+        "models/gemini-2.5-pro",
+        "models/gemini-2.5-flash-preview-tts",
+        "models/gemini-2.5-pro-preview-tts",
+        "models/gemma-4-26b-a4b-it",
+        "models/gemma-4-31b-it",
+        "models/gemini-flash-latest",
+        "models/gemini-flash-lite-latest",
+        "models/gemini-pro-latest"
     ] 
     
     selected_model = st.selectbox("🧠 బ్రెయిన్ సెలెక్ట్ చేసుకోండి:", available_models, index=0) 
