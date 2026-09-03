@@ -1,12 +1,11 @@
 import streamlit as st
 from openai import OpenAI
-from io import BytesIO
 import base64
 
 
-# =========================================================
+# ============================================================
 # PAGE CONFIGURATION
-# =========================================================
+# ============================================================
 
 st.set_page_config(
     page_title="Tech Mithra AI Pro",
@@ -15,19 +14,19 @@ st.set_page_config(
 )
 
 
-# =========================================================
-# APP SETTINGS
-# =========================================================
+# ============================================================
+# SETTINGS
+# ============================================================
 
 ADMIN_EMAIL = "madhukrishnamogili@gmail.com"
 
 TEXT_MODEL = "gpt-5.6-luna"
-IMAGE_MODEL = "gpt-image-1"
+IMAGE_MODEL = "gpt-image-2"
 
 
-# =========================================================
+# ============================================================
 # SESSION STATE
-# =========================================================
+# ============================================================
 
 if "app_name" not in st.session_state:
     st.session_state.app_name = "Tech Mithra AI Pro 🎓"
@@ -56,136 +55,133 @@ if "generated_image" not in st.session_state:
     st.session_state.generated_image = None
 
 
-# =========================================================
-# GET OPENAI CLIENT
-# =========================================================
+# ============================================================
+# OPENAI CLIENT
+# ============================================================
 
 def get_client():
-
     try:
-
         api_key = st.secrets["OPENAI_API_KEY"]
 
-        return OpenAI(
+        client = OpenAI(
             api_key=api_key
         )
 
-    except Exception:
+        return client
 
+    except Exception:
         return None
 
 
-# =========================================================
-# TEXT AI RESPONSE
-# =========================================================
+# ============================================================
+# MAIN AI RESPONSE FUNCTION
+# ============================================================
 
-def get_ai_response(
-    stream_name,
-    user_question,
-    mode
-):
+def get_ai_response(stream_name, user_question, mode):
 
     client = get_client()
 
     if client is None:
+        return """
+❌ **OpenAI API Key Error**
 
-        return (
-            "❌ **API Key Error**\n\n"
-            "Please add OPENAI_API_KEY in Streamlit Secrets."
-        )
+Please add your API key in Streamlit Secrets.
+
+Example:
+
+OPENAI_API_KEY = "your_api_key_here"
+"""
 
 
-    # =====================================================
+    # --------------------------------------------------------
     # PROJECT & LAB GUIDE
-    # =====================================================
+    # --------------------------------------------------------
 
     if mode == "🤖 Project & Lab Guide":
 
         feature_instruction = """
+You are an expert academic and technical tutor.
 
-You are an expert academic and technical AI tutor.
-
-Answer the EXACT question asked by the student.
+Answer the exact question asked by the student.
 
 Rules:
 - Give the direct answer first.
 - Explain clearly.
 - Use simple English.
-- Use Telugu if the user asks in Telugu.
-- Use headings and bullet points when useful.
-- For technical questions explain definition,
-  working principle, components and applications
-  when relevant.
+- If the question is Telugu, answer in Telugu.
+- Use headings when useful.
+- Use bullet points when useful.
+- For technical questions explain definition, working,
+  components and applications when relevant.
 - Do not give unrelated generic answers.
 """
 
 
-    # =====================================================
+    # --------------------------------------------------------
     # EVENT PLANNER
-    # =====================================================
+    # --------------------------------------------------------
 
     elif mode == "🎪 Event Planner":
 
         feature_instruction = """
-
 You are a professional college event planner.
 
-Create a complete and practical event plan.
+Create a detailed and practical event plan.
 
 Include:
 
 1. Event Title
-2. Theme
+2. Event Theme
 3. Objective
 4. Target Participants
 5. Suggested Venue
-6. Complete Schedule
-7. Required Resources
-8. Team Responsibilities
-9. Budget Considerations
-10. Promotion Strategy
-11. Expected Outcome
+6. Date and Time Suggestion
+7. Complete Event Schedule
+8. Required Resources
+9. Team Responsibilities
+10. Budget Considerations
+11. Promotion Strategy
+12. Expected Outcome
 
-Keep the answer directly related to the event topic.
+Keep everything directly related to the event topic.
 """
 
 
-    # =====================================================
+    # --------------------------------------------------------
     # EXAM HACKER
-    # =====================================================
+    # --------------------------------------------------------
 
     elif mode == "📚 Exam Hacker":
 
         feature_instruction = """
-
 You are an expert exam preparation assistant.
 
-Based on the topic, provide:
+Prepare study material based on the topic.
+
+Include:
 
 1. Definition
 2. Important Concepts
 3. Key Points
-4. Short Questions
-5. 5-Mark Questions
-6. Long Questions
+4. Important Short Questions
+5. Important 5-Mark Questions
+6. Important Long Questions
 7. Quick Revision Notes
 
-Keep everything directly related to the topic.
+Keep the content directly related to the topic.
 """
 
 
-    # =====================================================
+    # --------------------------------------------------------
     # PLACEMENT PREP
-    # =====================================================
+    # --------------------------------------------------------
 
     elif mode == "💼 Placement Prep":
 
         feature_instruction = """
+You are a professional placement and interview assistant.
 
-You are a professional placement
-and interview preparation assistant.
-
-Provide:
+Based on the requested job role or technology provide:
 
 1. Required Skills
 2. Important Technical Topics
@@ -194,104 +190,94 @@ Provide:
 5. HR Interview Questions
 6. Preparation Roadmap
 7. Career Tips
+
+Keep everything directly related to the role.
 """
 
 
     else:
 
         feature_instruction = """
-
 Answer accurately and clearly.
 """
 
 
     instructions = f"""
-
 You are Tech Mithra AI Pro.
 
-Student Stream:
+The student's education stream is:
 
 {stream_name}
 
 {feature_instruction}
 
-IMPORTANT:
+Important rules:
 
-- Answer the exact question.
-- Be accurate and helpful.
-- Do not give unrelated answers.
-- If the user asks in Telugu, answer in Telugu.
-- If the user asks in English, answer in English.
-
+- Answer exactly what the user asks.
+- Be helpful and accurate.
+- Do not give unrelated generic content.
+- Use simple language.
+- If the user writes in Telugu, answer in Telugu.
+- If the user writes in English, answer in English.
 """
 
 
     try:
 
         response = client.responses.create(
-
             model=TEXT_MODEL,
-
             instructions=instructions,
-
             input=user_question
-
         )
 
         return response.output_text
 
-
     except Exception as e:
 
-        return f"❌ AI Error:\n\n{str(e)}"
+        return f"""
+❌ **AI Error**
+
+{str(e)}
+"""
 
 
-# =========================================================
-# GENERATE EVENT IMAGE PROMPT
-# =========================================================
+# ============================================================
+# EVENT IMAGE PROMPT GENERATOR
+# ============================================================
 
-def generate_event_image_prompt(
-    event_topic,
-    event_plan
-):
+def generate_event_image_prompt(event_topic, event_plan):
 
     client = get_client()
 
     if client is None:
-
-        return (
-            "API Key not found."
-        )
+        return "❌ API Key not found."
 
 
     instructions = """
-
 You are an expert AI image prompt writer.
 
-Create one detailed, high-quality image generation prompt
-for a college event poster or event promotional image.
+Create one detailed professional image generation prompt
+for a college event promotional image.
 
-The prompt must include:
+The image prompt should include:
 
-- Event environment
-- College students
-- Stage or venue
+- College environment
+- Relevant students
+- Event stage or venue
 - Decorations
 - Professional lighting
 - Realistic atmosphere
 - Cinematic composition
 - High detail
-- No unwanted text inside the generated image
+- Professional event photography style
 
-The image should be suitable for a professional
-college event promotion.
+Do not include unwanted text inside the generated image.
 
-Return ONLY the image generation prompt.
+Return only the image generation prompt.
 """
 
 
-    input_text = f"""
-
+    user_input = f"""
 Event Topic:
 
 {event_topic}
@@ -300,65 +286,50 @@ Event Plan:
 
 {event_plan}
 
-Create a professional AI image prompt.
+Create a professional AI image generation prompt.
 """
 
 
     try:
 
         response = client.responses.create(
-
             model=TEXT_MODEL,
-
             instructions=instructions,
-
-            input=input_text
-
+            input=user_input
         )
 
         return response.output_text
 
-
     except Exception as e:
 
-        return f"Prompt Error: {str(e)}"
+        return f"❌ Prompt Generation Error: {str(e)}"
 
 
-# =========================================================
-# TEXT TO IMAGE
-# =========================================================
+# ============================================================
+# TEXT TO IMAGE GENERATOR
+# ============================================================
 
-def generate_event_image(
-    image_prompt
-):
+def generate_event_image(image_prompt):
 
     client = get_client()
 
     if client is None:
-
         return None, "API Key not found."
 
 
     try:
 
         result = client.images.generate(
-
             model=IMAGE_MODEL,
-
             prompt=image_prompt,
-
             size="1024x1024"
-
         )
 
-
         image_base64 = result.data[0].b64_json
-
 
         image_bytes = base64.b64decode(
             image_base64
         )
-
 
         return image_bytes, None
 
@@ -368,9 +339,9 @@ def generate_event_image(
         return None, str(e)
 
 
-# =========================================================
+# ============================================================
 # LOGIN PAGE
-# =========================================================
+# ============================================================
 
 if not st.session_state.logged_in:
 
@@ -384,9 +355,7 @@ if not st.session_state.logged_in:
     )
 
 
-    col1, col2, col3 = st.columns(
-        [1, 2, 1]
-    )
+    col1, col2, col3 = st.columns([1, 2, 1])
 
 
     with col2:
@@ -425,16 +394,19 @@ if not st.session_state.logged_in:
     st.stop()
 
 
-# =========================================================
+# ============================================================
 # SIDEBAR
-# =========================================================
+# ============================================================
 
 with st.sidebar:
 
-    st.image(
-        st.session_state.app_logo,
-        width=100
-    )
+    try:
+        st.image(
+            st.session_state.app_logo,
+            width=100
+        )
+    except Exception:
+        st.write("🚀")
 
 
     st.title(
@@ -442,9 +414,9 @@ with st.sidebar:
     )
 
 
-    # =====================================================
+    # --------------------------------------------------------
     # ADMIN SETTINGS
-    # =====================================================
+    # --------------------------------------------------------
 
     if (
         st.session_state.user_email.lower()
@@ -457,13 +429,13 @@ with st.sidebar:
 
             new_name = st.text_input(
                 "App Name",
-                st.session_state.app_name
+                value=st.session_state.app_name
             )
 
 
             new_logo = st.text_input(
                 "Logo URL",
-                st.session_state.app_logo
+                value=st.session_state.app_logo
             )
 
 
@@ -481,52 +453,36 @@ with st.sidebar:
     st.divider()
 
 
-    # =====================================================
+    # --------------------------------------------------------
     # STREAM SELECTION
-    # =====================================================
+    # --------------------------------------------------------
 
     education_stream = st.selectbox(
-
         "📚 Select Stream:",
-
         [
-
             "⚡ Engineering (B.Tech / EEE / CSE)",
-
             "💊 Pharmacy (B.Pharm / Pharm.D)",
-
             "🩺 Nursing (B.Sc / GNM)",
-
             "📈 MBA (Management)"
-
         ]
-
     )
 
 
     st.divider()
 
 
-    # =====================================================
-    # APP FEATURES
-    # =====================================================
+    # --------------------------------------------------------
+    # APP OPTIONS
+    # --------------------------------------------------------
 
     app_mode = st.radio(
-
         "Select Feature:",
-
         [
-
             "🤖 Project & Lab Guide",
-
             "🎪 Event Planner",
-
             "📚 Exam Hacker",
-
             "💼 Placement Prep"
-
         ]
-
     )
 
 
@@ -539,6 +495,12 @@ with st.sidebar:
     ):
 
         st.session_state.messages = []
+
+        st.session_state.generated_event_plan = ""
+
+        st.session_state.generated_image_prompt = ""
+
+        st.session_state.generated_image = None
 
         st.rerun()
 
@@ -557,23 +519,22 @@ with st.sidebar:
         st.rerun()
 
 
-# =========================================================
+# ============================================================
 # MAIN PAGE
-# =========================================================
+# ============================================================
 
 st.title(
     f"🚀 {st.session_state.app_name}"
 )
-
 
 st.caption(
     f"Selected Stream: {education_stream}"
 )
 
 
-# =========================================================
-# PROJECT & LAB GUIDE
-# =========================================================
+# ============================================================
+# OPTION 1: PROJECT & LAB GUIDE
+# ============================================================
 
 if app_mode == "🤖 Project & Lab Guide":
 
@@ -581,11 +542,12 @@ if app_mode == "🤖 Project & Lab Guide":
         "🤖 Project & Lab Guide"
     )
 
-
     st.info(
         "Ask any academic, technical or general question."
     )
 
+
+    # Show chat history
 
     for message in st.session_state.messages:
 
@@ -597,6 +559,8 @@ if app_mode == "🤖 Project & Lab Guide":
                 message["content"]
             )
 
+
+    # Ask question
 
     question = st.chat_input(
         "Ask any question..."
@@ -627,19 +591,14 @@ if app_mode == "🤖 Project & Lab Guide":
         ):
 
             with st.spinner(
-                "🤖 AI is thinking..."
+                "🤖 Tech Mithra AI is thinking..."
             ):
 
                 answer = get_ai_response(
-
                     education_stream,
-
                     question,
-
                     app_mode
-
                 )
-
 
                 st.markdown(
                     answer
@@ -654,9 +613,9 @@ if app_mode == "🤖 Project & Lab Guide":
         )
 
 
-# =========================================================
-# EVENT PLANNER
-# =========================================================
+# ============================================================
+# OPTION 2: EVENT PLANNER
+# ============================================================
 
 elif app_mode == "🎪 Event Planner":
 
@@ -664,26 +623,20 @@ elif app_mode == "🎪 Event Planner":
         "🎪 AI Event & Workshop Planner"
     )
 
-
     st.write(
-        "Create an event plan and generate "
-        "a professional promotional image."
+        "Generate an Event Plan, AI Photo Prompt and Event Image."
     )
 
 
     event_topic = st.text_area(
-
         "🎯 Enter Event Name / Topic:",
-
-        placeholder=
-        "Example: PLC Workshop for EEE Students"
-
+        placeholder="Example: PLC Workshop for EEE Students"
     )
 
 
-    # =====================================================
-    # EVENT PLAN GENERATION
-    # =====================================================
+    # --------------------------------------------------------
+    # GENERATE EVENT PLAN
+    # --------------------------------------------------------
 
     if st.button(
         "📋 Generate Event Plan",
@@ -693,19 +646,14 @@ elif app_mode == "🎪 Event Planner":
         if event_topic.strip():
 
             with st.spinner(
-                "🤖 Creating your Event Plan..."
+                "🤖 Creating Event Plan..."
             ):
 
                 event_plan = get_ai_response(
-
                     education_stream,
-
                     event_topic,
-
                     app_mode
-
                 )
-
 
                 st.session_state.generated_event_plan = (
                     event_plan
@@ -719,9 +667,9 @@ elif app_mode == "🎪 Event Planner":
             )
 
 
-    # =====================================================
-    # DISPLAY EVENT PLAN
-    # =====================================================
+    # --------------------------------------------------------
+    # SHOW EVENT PLAN
+    # --------------------------------------------------------
 
     if st.session_state.generated_event_plan:
 
@@ -733,13 +681,12 @@ elif app_mode == "🎪 Event Planner":
             st.session_state.generated_event_plan
         )
 
-
         st.divider()
 
 
-        # =================================================
-        # PHOTO PROMPT GENERATION
-        # =================================================
+        # ----------------------------------------------------
+        # GENERATE IMAGE PROMPT
+        # ----------------------------------------------------
 
         if st.button(
             "✍️ Generate Event Photo Prompt",
@@ -752,23 +699,19 @@ elif app_mode == "🎪 Event Planner":
 
                 image_prompt = (
                     generate_event_image_prompt(
-
                         event_topic,
-
                         st.session_state.generated_event_plan
-
                     )
                 )
-
 
                 st.session_state.generated_image_prompt = (
                     image_prompt
                 )
 
 
-    # =====================================================
-    # DISPLAY IMAGE PROMPT
-    # =====================================================
+    # --------------------------------------------------------
+    # SHOW IMAGE PROMPT
+    # --------------------------------------------------------
 
     if st.session_state.generated_image_prompt:
 
@@ -776,25 +719,18 @@ elif app_mode == "🎪 Event Planner":
             "📝 AI Generated Image Prompt"
         )
 
-
         st.text_area(
-
             "Photo Generation Prompt:",
-
-            value=
-            st.session_state.generated_image_prompt,
-
+            value=st.session_state.generated_image_prompt,
             height=250
-
         )
-
 
         st.divider()
 
 
-        # =================================================
-        # TEXT TO IMAGE
-        # =================================================
+        # ----------------------------------------------------
+        # GENERATE IMAGE
+        # ----------------------------------------------------
 
         if st.button(
             "🖼️ Generate Event Image",
@@ -802,14 +738,12 @@ elif app_mode == "🎪 Event Planner":
         ):
 
             with st.spinner(
-                "🎨 AI is generating your image..."
+                "🎨 AI is generating image..."
             ):
 
                 image_bytes, error = (
                     generate_event_image(
-
                         st.session_state.generated_image_prompt
-
                     )
                 )
 
@@ -827,9 +761,9 @@ elif app_mode == "🎪 Event Planner":
                     )
 
 
-    # =====================================================
-    # DISPLAY GENERATED IMAGE
-    # =====================================================
+    # --------------------------------------------------------
+    # SHOW GENERATED IMAGE
+    # --------------------------------------------------------
 
     if st.session_state.generated_image:
 
@@ -837,41 +771,24 @@ elif app_mode == "🎪 Event Planner":
             "🎨 Generated Event Image"
         )
 
-
         st.image(
-
             st.session_state.generated_image,
-
-            caption=
-            "AI Generated Event Promotional Image",
-
+            caption="AI Generated Event Promotional Image",
             use_container_width=True
-
         )
-
 
         st.download_button(
-
-            label=
-            "⬇️ Download Event Image",
-
-            data=
-            st.session_state.generated_image,
-
-            file_name=
-            "tech_mithra_event_image.png",
-
-            mime=
-            "image/png",
-
+            label="⬇️ Download Event Image",
+            data=st.session_state.generated_image,
+            file_name="tech_mithra_event_image.png",
+            mime="image/png",
             use_container_width=True
-
         )
 
 
-# =========================================================
-# EXAM HACKER
-# =========================================================
+# ============================================================
+# OPTION 3: EXAM HACKER
+# ============================================================
 
 elif app_mode == "📚 Exam Hacker":
 
@@ -879,14 +796,9 @@ elif app_mode == "📚 Exam Hacker":
         "📚 AI Exam Preparation"
     )
 
-
     subject_name = st.text_area(
-
         "Enter Subject or Topic:",
-
-        placeholder=
-        "Example: Electric Vehicles"
-
+        placeholder="Example: Electric Vehicles"
     )
 
 
@@ -902,19 +814,15 @@ elif app_mode == "📚 Exam Hacker":
             ):
 
                 answer = get_ai_response(
-
                     education_stream,
-
                     subject_name,
-
                     app_mode
-
                 )
-
 
                 st.markdown(
                     answer
                 )
+
 
         else:
 
@@ -923,9 +831,9 @@ elif app_mode == "📚 Exam Hacker":
             )
 
 
-# =========================================================
-# PLACEMENT PREP
-# =========================================================
+# ============================================================
+# OPTION 4: PLACEMENT PREP
+# ============================================================
 
 elif app_mode == "💼 Placement Prep":
 
@@ -933,14 +841,9 @@ elif app_mode == "💼 Placement Prep":
         "💼 Placement & Career Preparation"
     )
 
-
     role_name = st.text_area(
-
         "Enter Target Job Role / Technology:",
-
-        placeholder=
-        "Example: Electrical Engineer"
-
+        placeholder="Example: Electrical Engineer"
     )
 
 
@@ -956,19 +859,15 @@ elif app_mode == "💼 Placement Prep":
             ):
 
                 answer = get_ai_response(
-
                     education_stream,
-
                     role_name,
-
                     app_mode
-
                 )
-
 
                 st.markdown(
                     answer
                 )
+
 
         else:
 
