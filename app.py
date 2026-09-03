@@ -5,7 +5,7 @@ from PIL import Image
 
 st.set_page_config(page_title="Tech Mithra Long-Format Pro 🎓", page_icon="🚀", layout="wide")
 
-ADMIN_EMAIL = "madhukrishnamogili@gmail.com" 
+ADMIN_EMAIL = "madhukrishnamogii@gmail.com" 
 
 if "app_name" not in st.session_state:
     st.session_state.app_name = "Tech Mithra Pro 🎓"
@@ -72,11 +72,11 @@ with st.sidebar:
         st.query_params.clear()
         st.rerun()
 
-# --- 🧠 చాలా పెద్దవిగా, పక్కాగా లాంగ్ ఆన్సర్స్ ఇచ్చే అడ్వాన్స్డ్ ఇంజిన్ ---
+# --- 🧠 లాంగ్-ఫార్మాట్ అడ్వాన్స్డ్ ఇంజిన్ ---
 def get_long_comprehensive_answer(stream, prompt):
     text = prompt.lower()
     
-    # 1. ENGINEERING STREAM (Long Answers)
+    # 1. ENGINEERING STREAM
     if "engineering" in stream.lower():
         if "cloud computing" in text or "cloud" in text:
             return """### ☁️ Comprehensive Study Report: Cloud Computing Architecture & Ecosystem
@@ -108,107 +108,86 @@ Cloud computing represents a paradigm shift in how information technology is con
             return """### 🐍 In-Depth Technical Guide: Python Programming Language
 
 **1. Historical Evolution & Core Philosophy:**
-Python is a high-level, interpreted, object-oriented programming language created by Guido van Rossum, initially released in February 1991. The core philosophy of Python is encapsulated in the document *The Zen of Python*, which emphasizes code readability, explicit syntax over implicit complexity, and clean indentation rules that eliminate unnecessary curly braces or semicolons.
+Python is a high-level, interpreted, object-oriented programming language created by Guido van Rossum, initially released in February 1991. The core philosophy of Python emphasizes code readability, clean indentation rules, and explicit syntax over implicit complexity.
 
-**2. Internal Mechanics & Execution Model:**
-* **Interpreted & Bytecode Compilation:** Although traditionally classified as an interpreted language, modern Python implementations (such as CPython) compile human-readable source code (.py files) into intermediate bytecode (.pyc files) upon execution. This bytecode is subsequently evaluated by the Python Virtual Machine (PVM).
-* **Dynamic Typing & Memory Management:** Variable data types are resolved dynamically at runtime rather than compile time. Memory allocation and deallocation are managed automatically via built-in reference counting and a sophisticated generational garbage collection algorithm.
+**2. Internal Mechanics & Execution Model (Corrected):**
+* **Bytecode Compilation:** Although traditionally described as an interpreted language, modern Python implementations (such as CPython) internally compile human-readable source code (.py files) into intermediate bytecode (.pyc files) before execution by the Python Virtual Machine (PVM).
+* **Dynamic Typing & Memory Management:** Variable data types are resolved dynamically at runtime. Memory allocation and deallocation are managed automatically via reference counting and a generational garbage collection algorithm.
 
 **3. Major Industrial Domains and Frameworks:**
-* **Artificial Intelligence & Deep Learning:** Python dominates the AI landscape owing to specialized mathematical computation libraries including TensorFlow, PyTorch, Scikit-Learn, Keras, and OpenCV.
-* **Web Engineering & REST APIs:** Robust backend frameworks like Django, Flask, and FastAPI facilitate rapid creation of secure, highly scalable web architectures.
-* **Data Science, Analytics & Automation:** Packages such as NumPy, Pandas, Matplotlib, and Seaborn enable heavy-duty data cleansing, statistical modeling, and process automation."""
+* **Artificial Intelligence & Deep Learning:** Dominates AI via specialized libraries including TensorFlow, PyTorch, Scikit-Learn, and Keras.
+* **Web Engineering & REST APIs:** Robust backend frameworks like Django, Flask, and FastAPI.
+* **Data Science & Automation:** Packages such as NumPy, Pandas, and Matplotlib."""
 
         elif "plc" in text or "automation" in text:
             return """### ⚡ Advanced Industrial Automation: Programmable Logic Controllers (PLC)
 
 **1. Comprehensive Introduction:**
-A Programmable Logic Controller (PLC) is a specialized, ruggedized industrial computer designed to monitor complex electromechanical manufacturing processes, assembly automation lines, robotic cells, and continuous process plants. Unlike standard consumer computers, PLCs are engineered to operate reliably under extreme temperature variations, severe electrical noise, high humidity, and persistent physical vibrations.
+A Programmable Logic Controller (PLC) is a specialized, ruggedized industrial computer designed to monitor complex electromechanical manufacturing processes, assembly automation lines, and continuous process plants under extreme environmental conditions.
 
 **2. Internal Architecture & Hardware Modules:**
-* **Central Processing Unit (CPU):** The core processor that executes the user-defined control program, continuously scans field inputs, and updates output actuator states.
-* **Memory Subsystem:** Comprises volatile RAM for temporary data storage and non-volatile ROM/EEPROM/Flash memory for permanent storage of the operating system and user control logic.
-* **Input / Output (I/O) Interfaces:** 
-  * *Discrete/Digital Inputs:* Receive binary signals from limit switches, push buttons, and photoelectric sensors.
-  * *Analog Inputs:* Process continuous voltage or current signals from temperature sensors, pressure transmitters, and flow meters.
-  * *Outputs:* Drive motor contactors, pneumatic solenoid valves, indicator warning towers, and variable frequency drives (VFDs).
+* **Central Processing Unit (CPU):** Executes the user-defined control program, scans inputs, and updates outputs.
+* **Memory Subsystem:** Comprises volatile RAM and non-volatile ROM/EEPROM for permanent operating system storage.
+* **Input / Output (I/O) Interfaces:** Digital and analog interfaces connecting field sensors, push buttons, and motor actuators.
 
 **3. Programming Languages (IEC 61131-3 Standard):**
-* **Ladder Logic (LD):** The most popular graphical language mimicking traditional electrical relay schematic diagrams, making it intuitive for maintenance electricians.
-* **Structured Text (ST):** A powerful, high-level textual programming language structurally similar to Pascal or C, ideal for complex mathematical computations and data manipulation."""
+* **Ladder Logic (LD):** Graphical language mimicking traditional electrical relay schematics.
+* **Structured Text (ST):** High-level textual programming language similar to Pascal or C."""
 
-    # 2. PHARMACY STREAM (Long Answers)
+    # 2. PHARMACY STREAM
     elif "pharmacy" in stream.lower():
         if "tablet" in text or "capsule" in text or "drug" in text:
             return """### 💊 Comprehensive Pharmaceutical Engineering: Tablet Manufacturing & Quality Control
 
 **1. Introduction to Solid Dosage Forms:**
-Tablets are solid unit pharmaceutical dosage forms containing one or more active pharmaceutical ingredients (APIs) combined with appropriate pharmaceutical excipients (diluents, binders, disintegrants, lubricants, and coloring agents), manufactured via compression or molding techniques. They represent the most popular, stable, and patient-compliant mode of drug delivery.
+Tablets are solid unit pharmaceutical dosage forms containing active pharmaceutical ingredients (APIs) combined with excipients, manufactured via compression molding or heavy punch presses.
 
 **2. Comprehensive Quality Control (QC) Evaluation Parameters:**
-* **Tablet Hardness & Mechanical Strength:** 
-  * *Significance:* Evaluates the tablet's structural integrity to withstand shock and friction during industrial packaging, transit, and consumer handling.
-  * *Testing Instruments:* Monsanto tester, Pfizer tester, or Erweka hardness tester (acceptable limits typically range between 4 to 8 kg/cm²).
-* **Friability Testing:** 
-  * *Significance:* Measures vulnerability to surface abrasion and chipping.
-  * *Procedure:* Pre-weighed tablets are placed inside a Roche friabilator drum and subjected to rolling impacts at 25 RPM for 4 minutes (100 rotations). Total weight loss should not exceed 1% for standard formulations.
-* **Disintegration Time Test:** 
-  * *Significance:* Determines the duration required for solid tablets to completely break apart into smaller particles inside simulated gastric fluid at 37°C before systemic absorption can initiate."""
+* **Tablet Hardness & Mechanical Strength:** Evaluates structural integrity during packaging and transport (tested via Monsanto or Pfizer testers, 4-8 kg/cm²).
+* **Friability Testing:** Measures vulnerability to surface abrasion using a Roche friabilator at 25 RPM for 4 minutes (weight loss should be under 1%).
+* **Disintegration Time Test:** Determines duration required for tablets to break apart in simulated gastric fluid at 37°C."""
 
-    # 3. NURSING STREAM (Long Answers)
+    # 3. NURSING STREAM
     elif "nursing" in stream.lower():
         if "vital" in text or "patient" in text or "assessment" in text:
             return """### 🩺 Advanced Clinical Nursing: Comprehensive Patient Assessment & Vital Signs Protocols
 
 **1. Introduction to Patient Assessment:**
-Systematic physical and clinical assessment forms the cornerstone of professional nursing practice. Monitoring baseline physiological parameters allows healthcare practitioners to detect acute systemic deterioration, evaluate therapeutic responses, and initiate immediate, life-saving clinical interventions.
+Systematic physical and clinical assessment forms the cornerstone of professional nursing practice to detect acute systemic deterioration and evaluate therapeutic responses.
 
 **2. Detailed Breakdown of Core Vital Signs (TPR & BP):**
-* **Body Temperature:** 
-  * *Clinical Significance:* Measures the internal thermal equilibrium of the human body, governed by the hypothalamus. Normal baseline oral temperature is approximately 98.6°F (37°C). Elevated readings indicate pyrexia (fever) due to infection or systemic inflammation.
-* **Pulse Rate & Rhythm:** 
-  * *Clinical Significance:* Palpation of peripheral arteries (radial, carotid, or brachial) measures ventricular contractions per minute. Normal resting adult pulse ranges strictly between 60 to 100 beats per minute. Irregular rhythms require immediate ECG evaluation.
-* **Respiration Rate:** 
-  * *Clinical Significance:* Counting unannounced breathing cycles (inspiration and expiration) per minute. Normal adult rates range from 12 to 20 breaths per minute, evaluating pulmonary ventilation efficiency.
-* **Blood Pressure (BP):** 
-  * *Clinical Significance:* Measured using a sphygmomanometer and stethoscope, capturing systolic and diastolic arterial pressures (Standard normal baseline: 120/80 mmHg).
+* **Body Temperature:** Measures internal thermal equilibrium (Normal oral: 98.6°F / 37°C).
+* **Pulse Rate & Rhythm:** Palpation of peripheral arteries measuring ventricular contractions (Normal: 60–100 bpm).
+* **Respiration Rate:** Counting breathing cycles per minute (Normal: 12–20 breaths/min).
+* **Blood Pressure (BP):** Measured via sphygmomanometer (Normal baseline: 120/80 mmHg)."""
 
-**3. Standard Clinical Nursing Responsibilities:**
-* Maintain rigorous aseptic technique and hand hygiene during all patient interactions to prevent nosocomial infections.
-* Document exact quantitative measurements accurately in electronic health records without delay."""
-
-    # 4. MBA STREAM (Long Answers)
+    # 4. MBA STREAM
     elif "mba" in stream.lower():
         if "marketing" in text or "strategy" in text or "management" in text:
             return """### 📈 Executive MBA Study: Strategic Management & Advanced Marketing Frameworks
 
 **1. Strategic Planning & SWOT Analysis Framework:**
-Strategic management involves formulating and implementing cross-functional decisions that enable an organization to achieve long-term competitive advantage. A primary diagnostic tool is the **SWOT Matrix**:
-* **Internal Analysis (Strengths & Weaknesses):** Evaluation of proprietary technological assets, financial capital liquidity, brand equity, operational bottlenecks, and skilled human resources.
-* **External Analysis (Opportunities & Threats):** Assessment of macro-environmental shifts, emerging market trends, competitor positioning, regulatory changes, and economic volatility.
+Strategic management involves cross-functional decisions for long-term competitive advantage using the SWOT Matrix (Internal Strengths & Weaknesses, External Opportunities & Threats).
 
 **2. Comprehensive Marketing Mix (The 4 Ps of Marketing):**
-* **Product:** Encompasses core utility, quality standards, ergonomic design, packaging integrity, and brand positioning relative to market rivals.
-* **Price:** Formulating pricing architectures based on cost-plus structures, value-based pricing, skimming models, or penetration pricing to capture market share.
-* **Place (Distribution):** Designing efficient supply chain logistics and retail channel networks to ensure seamless product availability for target consumer demographics.
-* **Promotion:** Integrating multi-channel advertising campaigns, digital performance marketing, public relations, and direct sales promotions to maximize brand visibility and customer acquisition."""
+* **Product:** Core utility, quality standards, and packaging integrity.
+* **Price:** Cost-plus pricing, value-based pricing, and skimming models.
+* **Place (Distribution):** Supply chain logistics and retail channel networks.
+* **Promotion:** Multi-channel advertising, digital marketing, and sales promotions."""
 
-    # GENERAL LONG-FORMAT FALLBACK FOR ANY TOPIC
+    # GENERAL LONG-FORMAT FALLBACK
     return f"""### 📚 Comprehensive Academic & Technical Report: {prompt}
 
 **1. Executive Summary & Foundational Theoretical Framework:**
-* The selected subject matter **'{prompt}'** holds critical academic, industrial, and functional importance within the **{stream}** curriculum.
-* It requires rigorous analytical evaluation, understanding of underlying mathematical or scientific principles, and structured practical implementation.
+* The selected subject matter **'{prompt}'** holds critical academic and practical importance within the **{stream}** curriculum.
 
 **2. Detailed Technical Architecture & Core Principles:**
-* **System Design & Workflow:** Integrates sequential stages involving precise input data acquisition, systematic internal transformation or processing logic, and verifiable output generation.
-* **Performance Optimization & Quality Control:** Emphasizes minimizing operational latency, maximizing systemic reliability, eliminating processing errors, and adhering strictly to institutional standards.
+* **System Design & Workflow:** Integrates sequential stages involving precise data acquisition, internal processing logic, and output generation.
 
 **3. Industrial Applications & Future Scope:**
-* Extensively deployed across modern enterprise operations, advanced research laboratories, and cross-functional engineering projects.
-* Future developmental trajectories point toward deeper automation, algorithmic efficiency, and integration with intelligent digital ecosystems."""
+* Extensively deployed across modern enterprise operations and institutional projects."""
 
-# --- Main Screen Layout ---
+# --- Main Screen Layout with Chat Continuity ---
 if app_mode == "🤖 Project & Lab Guide":
     st.header(f"🤖 {st.session_state.app_name} - {education_stream.split()[1]} Lab Guide")
     
@@ -226,18 +205,24 @@ if app_mode == "🤖 Project & Lab Guide":
             img_to_send = Image.open(camera_photo)
             st.image(img_to_send, caption="కెమెరా ఫోటో", width=300)
 
+    # --- చాట్ హిస్టరీ మెమరీ ఇనిషియలైజేషన్ ---
     if "messages" not in st.session_state:
         st.session_state.messages = []
 
+    # --- మునుపటి చాట్స్ అన్నీ స్క్రీన్ పై కంటిన్యూగా డిస్ప్లే చేయడం ---
     for msg in st.session_state.messages:
         st.chat_message(msg["role"]).write(msg["content"])
 
+    # --- కొత్త మెసేజ్ ఇన్‌పుట్ & రెస్పాన్స్ హ్యాండ్లింగ్ ---
     if prompt := st.chat_input(f"Ask your {education_stream.split()[1]} doubt in detail..."):
+        # యూజర్ మెసేజ్ యాడ్ చేసి డిస్ప్లే చేయడం
         st.chat_message("user").write(prompt)
         st.session_state.messages.append({"role": "user", "content": prompt})
         
         with st.spinner("వివరణాత్మక లాంగ్ నోట్స్ సిద్ధం అవుతోంది... ⏳"):
             reply_text = get_long_comprehensive_answer(education_stream, prompt)
+            
+            # అసిస్టెంట్ రిప్లై డిస్ప్లే చేసి హిస్టరీలో సేవ్ చేయడం
             st.chat_message("assistant").write(reply_text)
             st.session_state.messages.append({"role": "assistant", "content": reply_text})
 
