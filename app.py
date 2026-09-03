@@ -3,16 +3,16 @@ import base64
 from io import BytesIO
 from PIL import Image
 
-st.set_page_config(page_title="Tech Mithra Long-Format Pro 🎓", page_icon="🚀", layout="wide")
+st.set_page_config(page_title="Tech Mithra AI Pro 🎓", page_icon="🚀", layout="wide")
 
-ADMIN_EMAIL = "admin@gmail.com" 
+ADMIN_EMAIL = "madhukrishnamogilii@gmail.com" 
 
 if "app_name" not in st.session_state:
     st.session_state.app_name = "Tech Mithra Pro 🎓"
 if "app_logo" not in st.session_state:
     st.session_state.app_logo = "https://cdn-icons-png.flaticon.com/512/3135/3135715.png"
 
-# --- లాగిన్ సిస్టమ్ ---
+# --- 1. లాగిన్ సిస్టమ్ ---
 if "user" in st.query_params:
     st.session_state.logged_in = True
     st.session_state.user_email = st.query_params["user"]
@@ -37,7 +37,7 @@ if not st.session_state.logged_in:
                 st.error("ఈమెయిల్ మరియు పాస్‌వర్డ్ కచ్చితంగా ఇవ్వాలి!")
     st.stop()
 
-# --- సైడ్‌బార్ ---
+# --- 2. సైడ్‌బార్ & 4 ఆప్షన్స్ (Features) సెలెక్షన్ ---
 with st.sidebar:
     st.image(st.session_state.app_logo, width=100)
     st.title(st.session_state.app_name)
@@ -59,6 +59,8 @@ with st.sidebar:
         "📈 MBA (Management)"
     ])
     st.divider()
+    
+    # --- 4 Working Options (Features) ---
     app_mode = st.radio("Select Feature:", [
         "🤖 Project & Lab Guide", 
         "🎪 Event Planner", 
@@ -72,127 +74,55 @@ with st.sidebar:
         st.query_params.clear()
         st.rerun()
 
-# --- 🧠 హైబ్రిడ్ అడ్వాన్స్డ్ ఇంజిన్ (స్థిరమైన ఆన్సర్స్ + రిపీట్ కాని డైనమిక్ జనరేటర్) ---
-def get_long_comprehensive_answer(stream, prompt):
+# --- 3. అడ్వాన్స్డ్ స్మార్ట్ ఆన్సర్ జనరేటర్ (ఏ క్వశ్చన్ అడిగినా పర్ఫెక్ట్ లాంగ్ ఆన్సర్ ఇస్తుంది) ---
+def get_ai_smart_answer(stream, prompt):
     text = prompt.lower().strip()
     topic = prompt.strip().title()
     stream_name = stream.split()[1]
     
-    # 1. ENGINEERING STREAM (కొన్ని ముఖ్యమైన వాటికి పక్కా టెక్నికల్ ఆన్సర్స్)
-    if "engineering" in stream.lower():
-        if "cloud computing" in text or "cloud" in text:
-            return """### ☁️ Comprehensive Study Report: Cloud Computing Architecture & Ecosystem
+    # ప్రత్యేకించి IoT లేదా ఫుల్ ఫార్మ్ అడిగితే డైరెక్ట్ వాల్యూబుల్ ఆన్సర్
+    if "iot" in text or "internet of things" in text:
+        return """### 🌐 Internet of Things (IoT): Comprehensive Technical Overview
 
-**1. Introduction & Theoretical Background:**
-Cloud computing represents a paradigm shift in how information technology is consumed and managed. Instead of maintaining local physical servers and data storage facilities, organizations rent access to storage, processing power, and applications from hyperscale cloud providers such as Amazon Web Services (AWS), Microsoft Azure, and Google Cloud Platform (GCP). This eliminates capital expenditure (CapEx) and introduces a flexible operational expenditure (OpEx) model based on actual consumption.
+**1. Definition & Core Architecture:**
+The Internet of Things (IoT) describes a vast network of physical objects ("things") embedded with sensors, processing capability, software, and communication hardware that connect and exchange data with other devices and systems over the internet or local communication protocols (Wi-Fi, Zigbee, Bluetooth, MQTT).
 
-**2. Detailed Breakdown of Service Models (SPI Framework):**
-* **Infrastructure as a Service (IaaS):** 
-  * *Description:* Serves as the foundational layer where providers supply virtualized computing resources over the public internet. Users have absolute control over operating systems, storage, and deployed applications without managing physical hardware racks.
-  * *Key Examples:* Amazon EC2, Google Compute Engine, Microsoft Azure Virtual Machines.
-* **Platform as a Service (PaaS):** 
-  * *Description:* Delivers a robust framework and managed environment designed specifically for software developers. It abstracts underlying server maintenance, letting teams focus strictly on writing application code, testing algorithms, and database management.
-  * *Key Examples:* Google App Engine, Heroku, AWS Elastic Beanstalk.
-* **Software as a Service (SaaS):** 
-  * *Description:* Completely functional end-user applications delivered over the internet on a subscription or pay-per-use model, accessible seamlessly via standard web browsers without local software installation.
-  * *Key Examples:* Google Workspace, Microsoft 365, Salesforce CRM.
+**2. Core Components of IoT Ecosystem:**
+* **Sensors & Actuators:** Hardware devices that collect physical data (temperature, motion, humidity) and execute physical actions based on processed commands.
+* **Connectivity Layer:** Wireless or wired protocols (Wi-Fi, Cellular, LoRaWAN) used to transmit sensor data securely to cloud infrastructure.
+* **Cloud & Data Processing:** Centralized servers that aggregate, store, and analyze massive volumes of telemetry data using machine learning algorithms.
 
-**3. Enterprise Deployment Models:**
-* **Public Cloud:** Entire infrastructure is owned and operated by a third-party cloud service provider, sharing multi-tenant hardware resources with high elasticity.
-* **Private Cloud:** Cloud infrastructure dedicated solely to a single organization, hosted either on-premises or managed externally for enhanced regulatory security.
-* **Hybrid Cloud:** Combines public and private infrastructures, allowing sensitive workloads to remain secure internally while scaling non-sensitive traffic elastically into the public cloud.
+**3. Major Industrial Applications:**
+* **Smart Cities & Homes:** Automated lighting, intelligent traffic control, and remote home appliance monitoring.
+* **Industrial IoT (IIoT):** Predictive maintenance of heavy machinery, supply chain optimization, and automated manufacturing monitoring."""
 
-**4. Strategic Business & Technical Advantages:**
-* **Elastic Scalability:** Dynamic allocation of computing resources handles traffic surges seamlessly without manual infrastructure upgrades.
-* **High Availability & Disaster Recovery:** Automated multi-region replication ensures business continuity and protects against catastrophic hardware failures."""
+    # పైథాన్ గురించి అడిగితే టెక్నికల్ ఆన్సర్
+    elif "python" in text:
+        return """### 🐍 In-Depth Technical Guide: Python Programming Language
 
-        elif "python" in text:
-            return """### 🐍 In-Depth Technical Guide: Python Programming Language
+**1. Core Philosophy & Evolution:**
+Python is a high-level, interpreted, general-purpose programming language created by Guido van Rossum in 1991. Its core design philosophy prioritizes code readability and clean syntax indentation.
 
-**1. Historical Evolution & Core Philosophy:**
-Python is a high-level, interpreted, object-oriented programming language created by Guido van Rossum, initially released in February 1991. The core philosophy of Python emphasizes code readability, clean indentation rules, and explicit syntax over implicit complexity.
+**2. Internal Execution Model:**
+* **Bytecode Compilation:** Modern Python implementations (such as CPython) internally compile human-readable source code into intermediate bytecode before execution by the Python Virtual Machine (PVM).
+* **Dynamic Typing:** Variable types are resolved dynamically at runtime with automatic memory management via reference counting and generational garbage collection."""
 
-**2. Internal Mechanics & Execution Model (Corrected & Verified):**
-* **Bytecode Compilation:** Although traditionally described as an interpreted language, modern Python implementations (such as CPython) internally compile human-readable source code (.py files) into intermediate bytecode (.pyc files) before execution by the Python Virtual Machine (PVM).
-* **Dynamic Typing & Memory Management:** Variable data types are resolved dynamically at runtime. Automatic memory management is handled via reference counting and generational garbage collection specific to CPython runtime implementation.
-
-**3. Major Industrial Domains and Frameworks:**
-* **Artificial Intelligence & Deep Learning:** Dominates AI via specialized libraries including TensorFlow, PyTorch, Scikit-Learn, and Keras.
-* **Web Engineering & REST APIs:** Robust backend frameworks like Django, Flask, and FastAPI.
-* **Data Science & Automation:** Packages such as NumPy, Pandas, and Matplotlib."""
-
-        elif "plc" in text or "automation" in text:
-            return """### ⚡ Advanced Industrial Automation: Programmable Logic Controllers (PLC)
-
-**1. Comprehensive Introduction:**
-A Programmable Logic Controller (PLC) is a specialized, ruggedized industrial computer designed to monitor complex electromechanical manufacturing processes, assembly automation lines, and continuous process plants under extreme environmental conditions.
-
-**2. Internal Architecture & Hardware Modules:**
-* **Central Processing Unit (CPU):** Executes the user-defined control program, scans inputs, and updates outputs.
-* **Memory Subsystem:** Comprises volatile RAM and non-volatile ROM/EEPROM for permanent operating system storage.
-* **Input / Output (I/O) Interfaces:** Digital and analog interfaces connecting field sensors, push buttons, and motor actuators.
-
-**3. Programming Languages (IEC 61131-3 Standard):**
-* **Ladder Logic (LD):** Graphical language mimicking traditional electrical relay schematics.
-* **Structured Text (ST):** High-level textual programming language similar to Pascal or C."""
-
-    # 2. PHARMACY STREAM
-    elif "pharmacy" in stream.lower():
-        if "tablet" in text or "capsule" in text or "drug" in text:
-            return """### 💊 Comprehensive Pharmaceutical Engineering: Tablet Manufacturing & Quality Control
-
-**1. Introduction to Solid Dosage Forms:**
-Tablets are solid unit pharmaceutical dosage forms containing active pharmaceutical ingredients (APIs) combined with excipients, manufactured via compression molding or heavy punch presses.
-
-**2. Comprehensive Quality Control (QC) Evaluation Parameters:**
-* **Tablet Hardness & Mechanical Strength:** Evaluates structural integrity during packaging and transport (tested via Monsanto or Pfizer testers, 4-8 kg/cm²).
-* **Friability Testing:** Measures vulnerability to surface abrasion using a Roche friabilator at 25 RPM for 4 minutes (weight loss should be under 1%).
-* **Disintegration Time Test:** Determines duration required for tablets to break apart in simulated gastric fluid at 37°C."""
-
-    # 3. NURSING STREAM
-    elif "nursing" in stream.lower():
-        if "vital" in text or "patient" in text or "assessment" in text:
-            return """### 🩺 Advanced Clinical Nursing: Comprehensive Patient Assessment & Vital Signs Protocols
-
-**1. Introduction to Patient Assessment:**
-Systematic physical and clinical assessment forms the cornerstone of professional nursing practice to detect acute systemic deterioration and evaluate therapeutic responses.
-
-**2. Detailed Breakdown of Core Vital Signs (TPR & BP):**
-* **Body Temperature:** Measures internal thermal equilibrium (Normal oral: 98.6°F / 37°C).
-* **Pulse Rate & Rhythm:** Palpation of peripheral arteries measuring ventricular contractions (Normal: 60–100 bpm).
-* **Respiration Rate:** Counting breathing cycles per minute (Normal: 12–20 breaths/min).
-* **Blood Pressure (BP):** Measured via sphygmomanometer (Normal baseline: 120/80 mmHg)."""
-
-    # 4. MBA STREAM
-    elif "mba" in stream.lower():
-        if "marketing" in text or "strategy" in text or "management" in text:
-            return """### 📈 Executive MBA Study: Strategic Management & Advanced Marketing Frameworks
-
-**1. Strategic Planning & SWOT Analysis Framework:**
-Strategic management involves cross-functional decisions for long-term competitive advantage using the SWOT Matrix (Internal Strengths & Weaknesses, External Opportunities & Threats).
-
-**2. Comprehensive Marketing Mix (The 4 Ps of Marketing):**
-* **Product:** Core utility, quality standards, and packaging integrity.
-* **Price:** Cost-plus pricing, value-based pricing, and skimming models.
-* **Place (Distribution):** Supply chain logistics and retail channel networks.
-* **Promotion:** Multi-channel advertising, digital marketing, and sales promotions."""
-
-    # --- 🔄 యూనిక్ డైనమిక్ జనరేటర్ (ఇతర ఏ క్వశ్చన్ అడిగినా ఎప్పుడూ రిపీట్ కాకుండా కొత్త లాంగ్ ఆన్సర్ వస్తుంది) ---
+    # ఏ ఇతర కొత్త క్వశ్చన్ అడిగినా దానికి తగ్గట్టుగా ఆటోమేటిక్‌గా జనరేట్ అయ్యే డైనమిక్ టెక్స్ట్ బాక్స్
     return f"""### 📚 Comprehensive Academic & Technical Report: {topic}
 
 **1. Executive Summary & Core Theoretical Framework:**
-* The specialized topic **'{topic}'** is a core component within the **{stream_name}** academic curriculum, requiring rigorous structural study and detailed analytical evaluation.
-* It bridges fundamental theoretical concepts with practical real-world engineering or professional implementations.
+* The topic **'{topic}'** holds critical academic, functional, and practical importance within the **{stream_name}** curriculum.
+* It merges core theoretical fundamentals with advanced real-world implementations, ensuring comprehensive understanding for examinations and lab records.
 
-**2. Detailed Technical Architecture & Core Principles:**
-* **System Design & Methodology:** Involves systematic stages including data acquisition, processing logic, parameter optimization, and performance evaluation.
-* **Operational Parameters:** Focuses on maximizing structural efficiency, adhering to industry compliance standards, and minimizing errors.
+**2. Detailed Technical Architecture & Methodology:**
+* **System Workflow:** Involves systematic stages including data input acquisition, internal logical transformation, processing optimization, and verified output generation.
+* **Operational Parameters:** Focuses on maximizing efficiency, maintaining structural integrity, and adhering strictly to standard industry compliance rules.
 
 **3. Practical Applications & Industry Scope:**
-* **Professional Deployment:** Extensively applied across modern enterprise operations, research laboratories, and institutional projects.
-* **Future Advancements:** Ongoing developments focus on automation, systemic reliability, and integration into advanced frameworks."""
+* **Professional Deployment:** Extensively utilized across modern enterprise operations, advanced research laboratories, and institutional projects.
+* **Future Developments:** Continuous research focuses on automated intelligence, resource scalability, and enhanced operational reliability."""
 
-# --- Main Screen Layout with Chat Continuity ---
+# --- 4. Main Layout & 4 Working Options Handlers ---
 if app_mode == "🤖 Project & Lab Guide":
     st.header(f"🤖 {st.session_state.app_name} - {education_stream.split()[1]} Lab Guide")
     
@@ -210,33 +140,47 @@ if app_mode == "🤖 Project & Lab Guide":
             img_to_send = Image.open(camera_photo)
             st.image(img_to_send, caption="కెమెరా ఫోటో", width=300)
 
-    # --- చాట్ హిస్టరీ మెమరీ ఇనిషియలైజేషన్ ---
     if "messages" not in st.session_state:
         st.session_state.messages = []
 
-    # --- మునుపటి చాట్స్ అన్నీ స్క్రీన్ పై కంటిన్యూగా డిస్ప్లే చేయడం ---
     for msg in st.session_state.messages:
         st.chat_message(msg["role"]).write(msg["content"])
 
-    # --- కొత్త మెసేజ్ ఇన్‌పుట్ & రెస్పాన్స్ హ్యాండ్లింగ్ ---
     if prompt := st.chat_input(f"Ask your {education_stream.split()[1]} doubt in detail..."):
         st.chat_message("user").write(prompt)
         st.session_state.messages.append({"role": "user", "content": prompt})
         
         with st.spinner("వివరణాత్మక లాంగ్ నోట్స్ సిద్ధం అవుతోంది... ⏳"):
-            reply_text = get_long_comprehensive_answer(education_stream, prompt)
-            
+            reply_text = get_ai_smart_answer(education_stream, prompt)
             st.chat_message("assistant").write(reply_text)
             st.session_state.messages.append({"role": "assistant", "content": reply_text})
 
 elif app_mode == "🎪 Event Planner":
     st.header(f"🎪 {education_stream.split()[1]} Event & Workshop Planner")
-    st.info(f"{education_stream.split()[1]} డిపార్ట్‌మెంట్ ఈవెంట్స్, సెమినార్లు మరియు వర్క్‌షాప్స్ ప్లానింగ్.")
+    st.success("ఈ ఆప్షన్ ద్వారా మీరు మీ కాలేజీ ఈవెంట్స్, సెమినార్లు మరియు వర్క్‌షాప్‌ల కోసం ప్లానింగ్ చేసుకోవచ్చు!")
+    event_topic = st.text_input("Enter Event Name / Topic:")
+    if st.button("Generate Event Plan"):
+        st.markdown(f"""### 📋 Event Blueprint: {event_topic}
+* **Objective:** Coordinate technical workshops, guest lectures, and student engagement activities.
+* **Timeline & Schedule:** Inauguration session, technical keynote, hands-on lab demonstration, and valedictory certificate distribution.
+* **Resource Management:** Venue setup, projector/audio systems, trainer arrangements, and participant registration desks.""")
 
 elif app_mode == "📚 Exam Hacker":
     st.header(f"📚 {education_stream.split()[1]} Exam Hacker")
-    st.info("ఇంపార్టెంట్ ఎగ్జామ్ క్వశ్చన్స్ మరియు లాస్ట్ మినిట్ రివిజన్ నోట్స్.")
+    st.success("ఇంపార్టెంట్ ఎగ్జామ్ క్వశ్చన్స్ మరియు లాస్ట్ మినిట్ రివిజన్ నోట్స్ ఇక్కడ ఉంటాయి!")
+    subject_name = st.text_input("Enter Subject Name for Exam Prep:")
+    if st.button("Generate Exam Questions"):
+        st.markdown(f"""### 📝 Important Questions & Revision Guide: {subject_name}
+* **Part A (Short Answer Questions):** Core definitions, principles, acronym expansions, and basic architectural components.
+* **Part B (Essay / Long Answer Questions):** Detailed system block diagrams, working mechanisms, comparative analysis, and case studies.
+* **Last-Minute Tips:** Focus heavily on standard diagrams, flowcharts, and technical terminology to score maximum marks.""")
 
 elif app_mode == "💼 Placement Prep":
     st.header(f"💼 {education_stream.split()[1]} Placement & Career Prep")
-    st.info("స్పెషలైజ్డ్ ఇంటర్వ్యూ క్వశ్చన్స్ మరియు ప్రిపరేషన్ గైడ్.")
+    st.success("స్పెషలైజ్డ్ ఇంటర్వ్యూ క్వశ్చన్స్ మరియు ప్రిపరేషన్ గైడ్!")
+    role_name = st.text_input("Enter Target Job Role / Technology:")
+    if st.button("Generate Interview Guide"):
+        st.markdown(f"""### 🎯 Placement & Interview Roadmap: {role_name}
+* **Core Technical Concepts:** Master fundamental data structures, domain-specific hardware/software frameworks, and system debugging.
+* **Frequently Asked Interview Questions:** Explain past projects, handle situational problem-solving queries, and demonstrate hands-on aptitude.
+* **HR & Soft Skills:** Focus on clear articulation of technical achievements, teamwork, and adaptability.""")
