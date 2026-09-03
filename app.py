@@ -1,168 +1,721 @@
 import streamlit as st
 from openai import OpenAI
+from PIL import Image
+import base64
 
-st.set_page_config(page_title="Tech Mithra AI Pro 🎓", page_icon="🚀", layout="wide")
 
-ADMIN_EMAIL = "madhukrishnamogili@gmail.com" 
+# =========================================================
+# PAGE SETTINGS
+# =========================================================
+
+st.set_page_config(
+    page_title="Tech Mithra AI Pro",
+    page_icon="🎓",
+    layout="wide"
+)
+
+
+# =========================================================
+# APP SETTINGS
+# =========================================================
+
+ADMIN_EMAIL = "madhukrishnamogili@gmail.com"
 
 if "app_name" not in st.session_state:
-    st.session_state.app_name = "Tech Mithra Pro 🎓"
-if "app_logo" not in st.session_state:
-    st.session_state.app_logo = "https://cdn-icons-png.flaticon.com/512/3135/3135715.png"
+    st.session_state.app_name = "Tech Mithra AI Pro 🎓"
 
-# --- 1. లాగిన్ సిస్టమ్ ---
-if "user" in st.query_params:
-    st.session_state.logged_in = True
-    st.session_state.user_email = st.query_params["user"]
-else:
-    if "logged_in" not in st.session_state:
-        st.session_state.logged_in = False
-        st.session_state.user_email = ""
+if "app_logo" not in st.session_state:
+    st.session_state.app_logo = (
+        "https://cdn-icons-png.flaticon.com/512/3135/3135715.png"
+    )
+
+if "messages" not in st.session_state:
+    st.session_state.messages = []
+
+if "logged_in" not in st.session_state:
+    st.session_state.logged_in = False
+
+if "user_email" not in st.session_state:
+    st.session_state.user_email = ""
+
+
+# =========================================================
+# OPENAI CLIENT
+# =========================================================
+
+def get_client():
+    try:
+        api_key = st.secrets["OPENAI_API_KEY"]
+        return OpenAI(api_key=api_key)
+    except Exception:
+        st.error(
+            "❌ OpenAI API Key కనబడలేదు. "
+            "Streamlit Secrets లో OPENAI_API_KEY add చేయండి."
+        )
+        return None
+
+
+# =========================================================
+# IMAGE TO BASE64
+# =========================================================
+
+def image_to_base64(image_file):
+
+    image_bytes = image_file.getvalue()
+
+    encoded = base64.b64encode(
+        image_bytes
+    ).decode("utf-8")
+
+    mime_type = image_file.type
+
+    return f"data:{mime_type};base64,{encoded}"
+
+
+# =========================================================
+# AI RESPONSE FUNCTION
+# =========================================================
+
+def get_ai_response(
+    stream_name,
+    question,
+    mode,
+    image_file=None
+):
+
+    client = get_client()
+
+    if client is None:
+        return None
+
+    # Different instructions for different features
+
+    if mode == "🤖 Project & Lab Guide":
+
+        feature_instruction = """
+You are an expert academic tutor and technical assistant.
+
+Answer the student's exact question.
+
+For technical questions:
+1. Give a direct definition first.
+2. Explain the concept clearly.
+3. Explain working principle if applicable.
+4. List important components.
+5. Give applications.
+6. Give advantages and disadvantages when relevant.
+7. Use simple English suitable for students.
+
+Do not give generic or unrelated content.
+If the question is short, give a short accurate answer.
+If the student asks for a long answer, give a detailed exam-style answer.
+"""
+
+    elif mode == "📚 Exam Hacker":
+
+        feature_instruction = """
+You are an exam preparation assistant.
+
+Answer the exact topic requested by the student.
+
+Provide:
+1. Important definition.
+2. Key concepts.
+3. Important exam points.
+4. Possible short-answer questions.
+5. Possible long-answer questions.
+6. Easy revision notes.
+
+Keep the answer academically accurate.
+Do not generate unrelated generic content.
+"""
+
+    elif mode == "🎪 Event Planner":
+
+        feature_instruction = """
+You are a professional college event planner.
+
+Create a practical event plan based exactly on the user's event topic.
+
+Include:
+1. Event objective.
+2. Target participants.
+3. Schedule.
+4. Required resources.
+5. Team responsibilities.
+6. Budget considerations.
+7. Promotion plan.
+8. Expected outcome.
+"""
+
+    elif mode == "💼 Placement Prep":
+
+        feature_instruction = """
+You are a professional placement and interview preparation assistant.
+
+Based on the job role or technology requested, provide:
+
+1. Required skills.
+2. Important technical topics.
+3. Frequently asked interview questions.
+4. Sample answers.
+5. HR questions.
+6. Preparation roadmap.
+
+Make the content relevant to the exact role requested.
+"""
+
+    else:
+        feature_instruction = """
+You are a helpful AI assistant.
+Answer the user's exact question accurately.
+"""
+
+
+    system_instruction = f"""
+You are Tech Mithra AI Pro.
+
+The student belongs to:
+{stream_name}
+
+{feature_instruction}
+
+IMPORTANT RULES:
+
+- Answer the exact question asked.
+- Never replace the answer with generic academic text.
+- Do not invent unrelated information.
+- Use clear headings.
+- Use bullet points where useful.
+- Explain difficult topics in simple English.
+- You can answer in Telugu if the user asks in Telugu.
+"""
+
+
+    try:
+
+        # -------------------------------
+        # TEXT ONLY
+        # -------------------------------
+
+        if image_file is None:
+
+            response = client.responses.create(
+
+                model="gpt-5.6-luna",
+
+                instructions=system_instruction,
+
+                input=question
+            )
+
+        # -------------------------------
+        # TEXT + IMAGE
+        # -------------------------------
+
+        else:
+
+            image_data = image_to_base64(
+                image_file
+            )
+
+            response = client.responses.create(
+
+                model="gpt-5.6-luna",
+
+                instructions=system_instruction,
+
+                input=[
+                    {
+                        "role": "user",
+
+                        "content": [
+
+                            {
+                                "type": "input_text",
+
+                                "text": question
+                            },
+
+                            {
+                                "type": "input_image",
+
+                                "image_url": image_data
+                            }
+                        ]
+                    }
+                ]
+            )
+
+        return response.output_text
+
+    except Exception as e:
+
+        return (
+            "❌ AI response error:\n\n"
+            f"`{str(e)}`"
+        )
+
+
+# =========================================================
+# SIMPLE LOGIN
+# =========================================================
 
 if not st.session_state.logged_in:
-    st.markdown(f"<h1 style='text-align: center;'>🔐 Login to {st.session_state.app_name}</h1>", unsafe_allow_html=True)
-    col1, col2, col3 = st.columns([1,2,1])
+
+    st.markdown(
+        f"""
+        <h1 style='text-align:center;'>
+        🔐 Login to {st.session_state.app_name}
+        </h1>
+        """,
+
+        unsafe_allow_html=True
+    )
+
+    col1, col2, col3 = st.columns(
+        [1, 2, 1]
+    )
+
     with col2:
-        email_input = st.text_input("📧 Email Address")
-        password_input = st.text_input("🔑 Password", type="password")
-        if st.button("🚀 Login", use_container_width=True):
+
+        email_input = st.text_input(
+            "📧 Email Address"
+        )
+
+        password_input = st.text_input(
+            "🔑 Password",
+            type="password"
+        )
+
+        if st.button(
+            "🚀 Login",
+            use_container_width=True
+        ):
+
             if email_input and password_input:
+
                 st.session_state.logged_in = True
-                st.session_state.user_email = email_input
-                st.query_params["user"] = email_input 
+
+                st.session_state.user_email = (
+                    email_input
+                )
+
                 st.rerun()
+
             else:
-                st.error("ఈమెయిల్ మరియు పాస్‌వర్డ్ కచ్చితంగా ఇవ్వాలి!")
+
+                st.error(
+                    "ఈమెయిల్ మరియు పాస్‌వర్డ్ ఇవ్వండి!"
+                )
+
     st.stop()
 
-# --- 2. సైడ్‌బార్ & 4 ఆప్షన్స్ (Features) సెలెక్షన్ ---
+
+# =========================================================
+# SIDEBAR
+# =========================================================
+
 with st.sidebar:
-    st.image(st.session_state.app_logo, width=100)
-    st.title(st.session_state.app_name)
-    
-    if st.session_state.user_email == ADMIN_EMAIL:
-        with st.expander("⚙️ Admin Settings"):
-            new_name = st.text_input("App Name:", st.session_state.app_name)
-            new_logo = st.text_input("Logo URL:", st.session_state.app_logo)
-            if st.button("💾 Save Settings"):
-                st.session_state.app_name = new_name
-                st.session_state.app_logo = new_logo
+
+    st.image(
+        st.session_state.app_logo,
+        width=100
+    )
+
+    st.title(
+        st.session_state.app_name
+    )
+
+
+    # -------------------------
+    # ADMIN SETTINGS
+    # -------------------------
+
+    if (
+        st.session_state.user_email
+        == ADMIN_EMAIL
+    ):
+
+        with st.expander(
+            "⚙️ Admin Settings"
+        ):
+
+            new_name = st.text_input(
+                "App Name",
+                st.session_state.app_name
+            )
+
+            new_logo = st.text_input(
+                "Logo URL",
+                st.session_state.app_logo
+            )
+
+            if st.button(
+                "💾 Save Settings"
+            ):
+
+                st.session_state.app_name = (
+                    new_name
+                )
+
+                st.session_state.app_logo = (
+                    new_logo
+                )
+
                 st.rerun()
-                
+
+
     st.divider()
-    education_stream = st.selectbox("📚 Select Stream:", [
-        "⚡ Engineering (B.Tech / EEE / CSE)", 
-        "💊 Pharmacy (B.Pharm / Pharm.D)", 
-        "🩺 Nursing (B.Sc / GNM)", 
-        "📈 MBA (Management)"
-    ])
+
+
+    education_stream = st.selectbox(
+
+        "📚 Select Stream",
+
+        [
+            "⚡ Engineering",
+            "💊 Pharmacy",
+            "🩺 Nursing",
+            "📈 MBA"
+        ]
+    )
+
+
     st.divider()
-    
-    # --- 4 Working Options (Features) ---
-    app_mode = st.radio("Select Feature:", [
-        "🤖 Project & Lab Guide", 
-        "🎪 Event Planner", 
-        "📚 Exam Hacker", 
-        "💼 Placement Prep"
-    ])
+
+
+    app_mode = st.radio(
+
+        "Select Feature:",
+
+        [
+            "🤖 Project & Lab Guide",
+            "🎪 Event Planner",
+            "📚 Exam Hacker",
+            "💼 Placement Prep"
+        ]
+    )
+
+
     st.divider()
-    if st.button("🚪 Logout"):
+
+
+    if st.button(
+        "🚪 Logout",
+        use_container_width=True
+    ):
+
         st.session_state.logged_in = False
+
         st.session_state.user_email = ""
-        st.query_params.clear()
-        st.rerun()
 
-# --- 3. OpenAI API ఆధారిత రెస్పాన్స్ ఫంక్షన్ (మీరు ఇచ్చిన కోడ్ లాజిక్ ప్రకారం) ---
-def get_openai_response(stream_name, question):
-    try:
-        # గమనిక: మీ దగ్గర సరైన OpenAI API కీ ఉంటే ఇది వర్క్ అవుతుంది
-        client = OpenAI(api_key="YOUR_OPENAI_API_KEY")
-        
-        response = client.responses.create(
-            model="gpt-4o-mini", # స్టాండర్డ్ మోడల్
-            instructions=f"""
-            You are a helpful AI assistant for {stream_name} students.
-            Answer questions accurately and clearly in long-form detail for lab records and exams.
-            Use simple English.
-            - Give a direct definition first.
-            - Explain important points.
-            - Use bullet points when useful.
-            """,
-            input=question
-        }
-        return response.output_text
-    except Exception as e:
-        # ఒకవేళ API కీ లేకపోయినా లేదా ఎర్రర్ వచ్చినా యాప్ క్రాష్ అవ్వకుండా లోకల్ ఫాల్‌బ్యాక్
-        return f"""### 📚 Comprehensive Academic Report: {question}
-
-**1. Executive Summary & Core Principles:**
-* The topic **'{question}'** is a fundamental concept within the **{stream_name}** curriculum.
-* It requires a structured academic explanation combining theoretical definitions and industrial applications.
-
-**2. Detailed Technical Breakdown:**
-* **System Architecture:** Systematic stages involving data acquisition, processing logic, and output validation.
-* **Key Parameters:** Focuses on maximizing efficiency, safety compliance, and operational reliability.
-
-**3. Practical Applications:**
-* Extensively utilized in modern laboratories, academic projects, and professional enterprise workflows."""
-
-# --- 4. Main Layout & 4 Working Options Handlers ---
-if app_mode == "🤖 Project & Lab Guide":
-    stream_short = education_stream.split()[1]
-    st.header(f"🤖 {st.session_state.app_name} - {stream_short} Lab Guide")
-    
-    tab1, tab2, tab3 = st.tabs(["💬 Text Chat", "🖼️ Upload Photo", "📸 Take Camera Photo"])
-    img_to_send = None
-
-    with tab2:
-        uploaded_file = st.file_uploader("లాబ్ మాన్యువల్ లేదా ఫోటో అప్‌లోడ్ చేయండి", type=["jpg", "jpeg", "png"])
-        if uploaded_file:
-            img_to_send = Image.open(uploaded_file)
-            st.image(img_to_send, caption="అప్‌లోడ్ చేసిన ఇమేజ్", width=300)
-    with tab3:
-        camera_photo = st.camera_input("ఫోటో తీయండి")
-        if camera_photo:
-            img_to_send = Image.open(camera_photo)
-            st.image(img_to_send, caption="కెమెరా ఫోటో", width=300)
-
-    if "messages" not in st.session_state:
         st.session_state.messages = []
 
-    for msg in st.session_state.messages:
-        st.chat_message(msg["role"]).write(msg["content"])
+        st.rerun()
 
-    if prompt := st.chat_input(f"Ask your {stream_short} doubt in detail..."):
-        st.chat_message("user").write(prompt)
-        st.session_state.messages.append({"role": "user", "content": prompt})
-        
-        with st.spinner("AI నిపుణుడు సమాధానం తయారు చేస్తోంది... ⏳"):
-            reply_text = get_openai_response(stream_short, prompt)
-            st.chat_message("assistant").write(reply_text)
-            st.session_state.messages.append({"role": "assistant", "content": reply_text})
+
+# =========================================================
+# MAIN TITLE
+# =========================================================
+
+st.title(
+    f"🚀 {st.session_state.app_name}"
+)
+
+st.caption(
+    f"Selected Stream: {education_stream}"
+)
+
+
+# =========================================================
+# PROJECT & LAB GUIDE
+# =========================================================
+
+if app_mode == "🤖 Project & Lab Guide":
+
+    st.header(
+        "🤖 AI Academic & Technical Assistant"
+    )
+
+
+    tab1, tab2, tab3 = st.tabs(
+
+        [
+            "💬 Ask Question",
+            "🖼️ Upload Image",
+            "📸 Camera"
+        ]
+    )
+
+
+    image_file = None
+
+
+    with tab2:
+
+        uploaded_file = st.file_uploader(
+
+            "Upload Question / Lab Manual / Diagram",
+
+            type=[
+                "jpg",
+                "jpeg",
+                "png"
+            ]
+        )
+
+
+        if uploaded_file:
+
+            image_file = uploaded_file
+
+            image = Image.open(
+                uploaded_file
+            )
+
+            st.image(
+                image,
+                caption="Uploaded Image",
+                width=400
+            )
+
+
+    with tab3:
+
+        camera_photo = st.camera_input(
+
+            "Take a Photo"
+        )
+
+
+        if camera_photo:
+
+            image_file = camera_photo
+
+            image = Image.open(
+                camera_photo
+            )
+
+            st.image(
+                image,
+                caption="Camera Image",
+                width=400
+            )
+
+
+    # -------------------------
+    # SHOW CHAT HISTORY
+    # -------------------------
+
+    for message in (
+        st.session_state.messages
+    ):
+
+        with st.chat_message(
+            message["role"]
+        ):
+
+            st.markdown(
+                message["content"]
+            )
+
+
+    # -------------------------
+    # USER QUESTION
+    # -------------------------
+
+    prompt = st.chat_input(
+        "Ask any question..."
+    )
+
+
+    if prompt:
+
+        st.session_state.messages.append(
+            {
+                "role": "user",
+                "content": prompt
+            }
+        )
+
+
+        with st.chat_message("user"):
+
+            st.markdown(prompt)
+
+
+        with st.chat_message("assistant"):
+
+            with st.spinner(
+                "🤖 Tech Mithra AI is thinking..."
+            ):
+
+                answer = get_ai_response(
+
+                    education_stream,
+
+                    prompt,
+
+                    app_mode,
+
+                    image_file
+                )
+
+
+                st.markdown(answer)
+
+
+        st.session_state.messages.append(
+            {
+                "role": "assistant",
+                "content": answer
+            }
+        )
+
+
+# =========================================================
+# EVENT PLANNER
+# =========================================================
 
 elif app_mode == "🎪 Event Planner":
-    st.header(f"🎪 {education_stream.split()[1]} Event & Workshop Planner")
-    st.success("ఈ ఆప్షన్ ద్వారా మీరు మీ కాలేజీ ఈవెంట్స్, సెమినార్లు మరియు వర్క్‌షాప్‌ల కోసం ప్లానింగ్ చేసుకోవచ్చు!")
-    event_topic = st.text_input("Enter Event Name / Topic:")
-    if st.button("Generate Event Plan"):
-        st.markdown(f"""### 📋 Event Blueprint: {event_topic}
-* **Objective:** Coordinate technical workshops and student engagement activities.
-* **Timeline & Schedule:** Inauguration, technical keynote, and hands-on lab demonstration.""")
+
+    st.header(
+        "🎪 Event & Workshop Planner"
+    )
+
+
+    event_topic = st.text_area(
+
+        "Enter Event Name or Topic",
+
+        placeholder=
+        "Example: PLC Workshop for EEE Students"
+    )
+
+
+    if st.button(
+        "Generate Event Plan",
+        use_container_width=True
+    ):
+
+        if event_topic:
+
+            with st.spinner(
+                "Creating Event Plan..."
+            ):
+
+                answer = get_ai_response(
+
+                    education_stream,
+
+                    event_topic,
+
+                    app_mode
+                )
+
+                st.markdown(answer)
+
+        else:
+
+            st.warning(
+                "Please enter an event topic."
+            )
+
+
+# =========================================================
+# EXAM HACKER
+# =========================================================
 
 elif app_mode == "📚 Exam Hacker":
-    st.header(f"📚 {education_stream.split()[1]} Exam Hacker")
-    st.success("ఇంపార్టెంట్ ఎగ్జామ్ క్వశ్చన్స్ మరియు లాస్ట్ మినిట్ రివిజన్ నోట్స్ ఇక్కడ ఉంటాయి!")
-    subject_name = st.text_input("Enter Subject Name for Exam Prep:")
-    if st.button("Generate Exam Questions"):
-        st.markdown(f"""### 📝 Important Questions & Revision Guide: {subject_name}
-* **Part A:** Core definitions, principles, and basic components.
-* **Part B:** Detailed system block diagrams and working mechanisms.""")
+
+    st.header(
+        "📚 AI Exam Preparation"
+    )
+
+
+    subject_topic = st.text_area(
+
+        "Enter Subject / Topic",
+
+        placeholder=
+        "Example: Electric Vehicles"
+    )
+
+
+    if st.button(
+        "Generate Exam Preparation",
+        use_container_width=True
+    ):
+
+        if subject_topic:
+
+            with st.spinner(
+                "Preparing exam notes..."
+            ):
+
+                answer = get_ai_response(
+
+                    education_stream,
+
+                    subject_topic,
+
+                    app_mode
+                )
+
+                st.markdown(answer)
+
+        else:
+
+            st.warning(
+                "Please enter a subject or topic."
+            )
+
+
+# =========================================================
+# PLACEMENT PREP
+# =========================================================
 
 elif app_mode == "💼 Placement Prep":
-    st.header(f"💼 {education_stream.split()[1]} Placement & Career Prep")
-    st.success("స్పెషలైజ్డ్ ఇంటర్వ్యూ క్వశ్చన్స్ మరియు ప్రిపరేషన్ గైడ్!")
-    role_name = st.text_input("Enter Target Job Role / Technology:")
-    if st.button("Generate Interview Guide"):
-        st.markdown(f"""### 🎯 Placement & Interview Roadmap: {role_name}
-* **Core Technical Concepts:** Master fundamental data structures and frameworks.
-* **Frequently Asked Questions:** Explain past projects and problem-solving queries.""")
+
+    st.header(
+        "💼 Placement & Interview Preparation"
+    )
+
+
+    role_name = st.text_area(
+
+        "Enter Job Role / Technology",
+
+        placeholder=
+        "Example: Electrical Engineer"
+    )
+
+
+    if st.button(
+        "Generate Interview Guide",
+        use_container_width=True
+    ):
+
+        if role_name:
+
+            with st.spinner(
+                "Preparing Interview Guide..."
+            ):
+
+                answer = get_ai_response(
+
+                    education_stream,
+
+                    role_name,
+
+                    app_mode
+                )
+
+                st.markdown(answer)
+
+        else:
+
+            st.warning(
+                "Please enter a job role."
+            )
