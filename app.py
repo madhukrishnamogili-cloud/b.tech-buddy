@@ -43,68 +43,6 @@ if "messages" not in st.session_state:
 
 
 # =========================================================
-# LOGIN SYSTEM
-# =========================================================
-
-if "user" in st.query_params:
-
-    st.session_state.logged_in = True
-    st.session_state.user_email = st.query_params["user"]
-
-
-if not st.session_state.logged_in:
-
-    st.markdown(
-        f"""
-        <h1 style='text-align:center;'>
-        🔐 Login to {st.session_state.app_name}
-        </h1>
-        """,
-        unsafe_allow_html=True
-    )
-
-    col1, col2, col3 = st.columns([1, 2, 1])
-
-    with col2:
-
-        email_input = st.text_input(
-            "📧 Email Address"
-        )
-
-        password_input = st.text_input(
-            "🔑 Password",
-            type="password"
-        )
-
-        if st.button(
-            "🚀 Login",
-            use_container_width=True
-        ):
-
-            if email_input and password_input:
-
-                st.session_state.logged_in = True
-
-                st.session_state.user_email = (
-                    email_input
-                )
-
-                st.query_params["user"] = (
-                    email_input
-                )
-
-                st.rerun()
-
-            else:
-
-                st.error(
-                    "ఈమెయిల్ మరియు పాస్‌వర్డ్ ఇవ్వండి!"
-                )
-
-    st.stop()
-
-
-# =========================================================
 # OPENAI CLIENT
 # =========================================================
 
@@ -118,12 +56,7 @@ def get_client():
             api_key=api_key
         )
 
-    except Exception as e:
-
-        st.error(
-            "❌ OPENAI_API_KEY కనబడలేదు. "
-            "Streamlit Secrets లో API Key add చేయండి."
-        )
+    except Exception:
 
         return None
 
@@ -132,7 +65,7 @@ def get_client():
 # AI RESPONSE FUNCTION
 # =========================================================
 
-def get_openai_response(
+def get_ai_response(
     stream_name,
     question,
     mode
@@ -142,11 +75,14 @@ def get_openai_response(
 
     if client is None:
 
-        return None
+        return (
+            "❌ API Key not found.\n\n"
+            "Please add OPENAI_API_KEY in Streamlit Secrets."
+        )
 
 
     # =====================================================
-    # PROJECT & LAB GUIDE INSTRUCTIONS
+    # PROJECT & LAB GUIDE
     # =====================================================
 
     if mode == "🤖 Project & Lab Guide":
@@ -160,47 +96,19 @@ Answer the EXACT question asked by the student.
 Rules:
 
 1. Give a direct definition first.
-2. Explain the concept clearly.
+2. Explain clearly.
 3. Use simple English.
 4. Give important points.
-5. Use bullet points where useful.
+5. Use bullet points when useful.
 6. Give examples when relevant.
-7. For engineering questions explain components,
-   working principle and applications when applicable.
+7. For engineering questions explain:
+   - Definition
+   - Components
+   - Working principle
+   - Applications
 8. Do NOT give generic answers.
 9. Do NOT give unrelated information.
-10. If the question is short, answer directly.
-11. If the user asks for a long answer,
-    provide a detailed exam-style answer.
-
-"""
-
-
-    # =====================================================
-    # EXAM PREPARATION
-    # =====================================================
-
-    elif mode == "📚 Exam Hacker":
-
-        feature_instruction = """
-
-You are an exam preparation assistant.
-
-Based on the exact topic given by the student,
-provide useful exam preparation material.
-
-Include:
-
-1. Definition
-2. Important concepts
-3. Key points
-4. Short-answer questions
-5. Long-answer questions
-6. Revision notes
-
-Everything must be relevant to the topic.
-
-Do not generate generic unrelated content.
+10. Answer according to the exact question.
 
 """
 
@@ -220,21 +128,48 @@ the exact event topic given by the user.
 
 Include:
 
-1. Event title
-2. Event objective
-3. Target participants
-4. Event schedule
-5. Required resources
-6. Team responsibilities
-7. Budget considerations
-8. Promotion strategy
-9. Expected outcome
+1. Event Title
+2. Event Objective
+3. Target Participants
+4. Date and Schedule Suggestion
+5. Required Resources
+6. Team Responsibilities
+7. Budget Requirements
+8. Promotion Plan
+9. Expected Outcome
 
 """
 
 
     # =====================================================
-    # PLACEMENT PREPARATION
+    # EXAM HACKER
+    # =====================================================
+
+    elif mode == "📚 Exam Hacker":
+
+        feature_instruction = """
+
+You are an expert exam preparation assistant.
+
+Based on the exact subject or topic,
+provide:
+
+1. Simple Definition
+2. Important Concepts
+3. Key Points
+4. Important 2-Mark Questions
+5. Important 5-Mark Questions
+6. Important Long Questions
+7. Quick Revision Notes
+
+Keep everything directly related to
+the topic requested by the student.
+
+"""
+
+
+    # =====================================================
+    # PLACEMENT PREP
     # =====================================================
 
     elif mode == "💼 Placement Prep":
@@ -244,15 +179,16 @@ Include:
 You are a professional placement and
 interview preparation assistant.
 
-Based on the exact job role or technology
-requested by the student, provide:
+Based on the exact job role or technology,
+provide:
 
-1. Required skills
-2. Important technical topics
-3. Interview questions
-4. Sample answers
-5. HR questions
-6. Preparation roadmap
+1. Required Skills
+2. Important Technical Topics
+3. Frequently Asked Interview Questions
+4. Sample Answers
+5. HR Interview Questions
+6. Preparation Roadmap
+7. Tips for Students
 
 """
 
@@ -276,7 +212,6 @@ and accurately.
 You are Tech Mithra AI Pro.
 
 Student Stream:
-
 {stream_name}
 
 {feature_instruction}
@@ -284,19 +219,20 @@ Student Stream:
 IMPORTANT RULES:
 
 - Answer the exact question asked.
-- Never give unrelated generic academic reports.
+- Never give unrelated generic answers.
 - Be accurate.
 - Use simple English.
 - Use headings when useful.
 - Use bullet points when useful.
 - If the user asks in Telugu, answer in Telugu.
 - If the user asks in English, answer in English.
+- Do not invent information.
 
 """
 
 
     # =====================================================
-    # OPENAI API CALL
+    # OPENAI API REQUEST
     # =====================================================
 
     try:
@@ -308,6 +244,7 @@ IMPORTANT RULES:
             instructions=instructions,
 
             input=question
+
         )
 
         return response.output_text
@@ -322,15 +259,79 @@ IMPORTANT RULES:
 
 
 # =========================================================
+# LOGIN SYSTEM
+# =========================================================
+
+if not st.session_state.logged_in:
+
+    st.markdown(
+        f"""
+        <h1 style='text-align:center;'>
+        🔐 Login to {st.session_state.app_name}
+        </h1>
+        """,
+        unsafe_allow_html=True
+    )
+
+    col1, col2, col3 = st.columns(
+        [1, 2, 1]
+    )
+
+
+    with col2:
+
+        email_input = st.text_input(
+            "📧 Email Address"
+        )
+
+        password_input = st.text_input(
+            "🔑 Password",
+            type="password"
+        )
+
+
+        if st.button(
+            "🚀 Login",
+            use_container_width=True
+        ):
+
+            if email_input and password_input:
+
+                st.session_state.logged_in = True
+
+                st.session_state.user_email = (
+                    email_input
+                )
+
+                st.rerun()
+
+
+            else:
+
+                st.error(
+                    "ఈమెయిల్ మరియు పాస్‌వర్డ్ ఇవ్వండి!"
+                )
+
+
+    st.stop()
+
+
+# =========================================================
 # SIDEBAR
 # =========================================================
 
 with st.sidebar:
 
+
+    # =====================================================
+    # LOGO
+    # =====================================================
+
     st.image(
         st.session_state.app_logo,
         width=100
     )
+
 
     st.title(
         st.session_state.app_name
@@ -432,6 +433,20 @@ with st.sidebar:
 
 
     # =====================================================
+    # CLEAR CHAT
+    # =====================================================
+
+    if st.button(
+        "🗑️ Clear Chat",
+        use_container_width=True
+    ):
+
+        st.session_state.messages = []
+
+        st.rerun()
+
+
+    # =====================================================
     # LOGOUT
     # =====================================================
 
@@ -446,17 +461,19 @@ with st.sidebar:
 
         st.session_state.messages = []
 
-        st.query_params.clear()
-
         st.rerun()
 
 
 # =========================================================
-# MAIN APP
+# MAIN PAGE
 # =========================================================
 
 st.title(
     f"🚀 {st.session_state.app_name}"
+)
+
+st.caption(
+    f"Selected Stream: {education_stream}"
 )
 
 
@@ -470,8 +487,8 @@ if app_mode == "🤖 Project & Lab Guide":
         "🤖 AI Academic & Technical Assistant"
     )
 
-    st.caption(
-        f"Selected Stream: {education_stream}"
+    st.info(
+        "Ask any academic, technical or general question."
     )
 
 
@@ -479,37 +496,39 @@ if app_mode == "🤖 Project & Lab Guide":
     # SHOW CHAT HISTORY
     # =====================================================
 
-    for msg in st.session_state.messages:
+    for message in st.session_state.messages:
 
         with st.chat_message(
-            msg["role"]
+            message["role"]
         ):
 
             st.markdown(
-                msg["content"]
+                message["content"]
             )
 
 
     # =====================================================
-    # CHAT INPUT
+    # QUESTION INPUT
     # =====================================================
 
-    prompt = st.chat_input(
-        "Ask any academic or technical question..."
+    question = st.chat_input(
+        "Ask your question here..."
     )
 
 
-    if prompt:
+    if question:
 
 
+        # =================================================
         # USER MESSAGE
+        # =================================================
 
         with st.chat_message(
             "user"
         ):
 
             st.markdown(
-                prompt
+                question
             )
 
 
@@ -519,14 +538,16 @@ if app_mode == "🤖 Project & Lab Guide":
 
                 "role": "user",
 
-                "content": prompt
+                "content": question
 
             }
 
         )
 
 
+        # =================================================
         # AI MESSAGE
+        # =================================================
 
         with st.chat_message(
             "assistant"
@@ -536,39 +557,37 @@ if app_mode == "🤖 Project & Lab Guide":
                 "🤖 Tech Mithra AI is thinking..."
             ):
 
-                reply_text = get_openai_response(
+                answer = get_ai_response(
 
                     education_stream,
 
-                    prompt,
+                    question,
 
                     app_mode
 
                 )
 
 
-                if reply_text:
-
-                    st.markdown(
-                        reply_text
-                    )
+                st.markdown(
+                    answer
+                )
 
 
-        # SAVE AI RESPONSE
+        # =================================================
+        # SAVE AI MESSAGE
+        # =================================================
 
-        if reply_text:
+        st.session_state.messages.append(
 
-            st.session_state.messages.append(
+            {
 
-                {
+                "role": "assistant",
 
-                    "role": "assistant",
+                "content": answer
 
-                    "content": reply_text
+            }
 
-                }
-
-            )
+        )
 
 
 # =========================================================
@@ -598,7 +617,7 @@ elif app_mode == "🎪 Event Planner":
 
 
     if st.button(
-        "Generate Event Plan",
+        "🚀 Generate Event Plan",
         use_container_width=True
     ):
 
@@ -611,7 +630,7 @@ elif app_mode == "🎪 Event Planner":
             ):
 
 
-                answer = get_openai_response(
+                answer = get_ai_response(
 
                     education_stream,
 
@@ -622,11 +641,9 @@ elif app_mode == "🎪 Event Planner":
                 )
 
 
-                if answer:
-
-                    st.markdown(
-                        answer
-                    )
+                st.markdown(
+                    answer
+                )
 
 
         else:
@@ -663,7 +680,7 @@ elif app_mode == "📚 Exam Hacker":
 
 
     if st.button(
-        "Generate Exam Preparation",
+        "📚 Generate Exam Preparation",
         use_container_width=True
     ):
 
@@ -676,7 +693,7 @@ elif app_mode == "📚 Exam Hacker":
             ):
 
 
-                answer = get_openai_response(
+                answer = get_ai_response(
 
                     education_stream,
 
@@ -687,11 +704,9 @@ elif app_mode == "📚 Exam Hacker":
                 )
 
 
-                if answer:
-
-                    st.markdown(
-                        answer
-                    )
+                st.markdown(
+                    answer
+                )
 
 
         else:
@@ -728,7 +743,7 @@ elif app_mode == "💼 Placement Prep":
 
 
     if st.button(
-        "Generate Interview Guide",
+        "💼 Generate Interview Guide",
         use_container_width=True
     ):
 
@@ -741,7 +756,7 @@ elif app_mode == "💼 Placement Prep":
             ):
 
 
-                answer = get_openai_response(
+                answer = get_ai_response(
 
                     education_stream,
 
@@ -752,11 +767,9 @@ elif app_mode == "💼 Placement Prep":
                 )
 
 
-                if answer:
-
-                    st.markdown(
-                        answer
-                    )
+                st.markdown(
+                    answer
+                )
 
 
         else:
