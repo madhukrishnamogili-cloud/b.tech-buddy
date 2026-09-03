@@ -72,7 +72,24 @@ with st.sidebar:
         st.query_params.clear()
         st.rerun()
 
-# --- 🧠 లాంగ్-ఫార్మాట్ అడ్వాన్స్డ్ ఇంజిన్ ---
+# --- 🧠 డైనమిక్ లాంగ్-ఫార్మాట్ ఇంజిన్ ---
+def get_long_comprehensive_answer(stream, prompt):
+    topic = prompt.strip().title()
+    stream_name = stream.split()[1]
+    
+    return f"""### 📚 Comprehensive Academic & Technical Report: {topic}
+
+**1. Executive Summary & Core Theoretical Framework:**
+* The specialized topic **'{topic}'** is a fundamental pillar within the **{stream_name}** curriculum, requiring rigorous structural study and analytical evaluation.
+* It bridges theoretical concepts with real-world applications, ensuring students grasp both foundational mechanics and advanced industry implementations.
+
+**2. Detailed Technical Architecture & Core Principles:**
+* **System Design & Methodology:** Involves systematic processing stages, data input acquisition, internal logical or physical transformation, and verified output generation.
+* **Operational Parameters:** Focuses on optimizing efficiency, ensuring safety compliance, minimizing latency or structural faults, and adhering strictly to institutional and industrial benchmarks.
+
+**3. Practical Applications & Industry Scope:**
+* **Professional Deployment:** Extensively utilized across modern enterprise workflows, research laboratories, manufacturing units, and clinical or corporate environments.
+* **Future Advancements:** Continuous research aims to integrate automated intelligence, scaling capabilities, and optimized resource management to enhance overall productivity."""
 def get_long_comprehensive_answer(stream, prompt):
     text = prompt.lower()
     
