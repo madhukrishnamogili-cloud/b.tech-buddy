@@ -90,10 +90,18 @@ def get_ai_response(
     image_file=None
 ):
 
+    def get_ai_response(
+    stream_name,
+    question,
+    mode,
+    image_file=None
+):
+
     client = get_client()
 
     if client is None:
         return None
+
 
     # Different instructions for different features
 
