@@ -56,6 +56,7 @@ def get_client():
     try:
         api_key = st.secrets["OPENAI_API_KEY"]
         return OpenAI(api_key=api_key)
+        client = OpenAI(api_key=api_key)
 
     except Exception as e:
         st.error("❌ OpenAI API Key not found.")
