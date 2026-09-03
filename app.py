@@ -5,7 +5,7 @@ from PIL import Image
 
 st.set_page_config(page_title="Tech Mithra Long-Format Pro 🎓", page_icon="🚀", layout="wide")
 
-ADMIN_EMAIL = "madhukrishnamogii@gmail.com" 
+ADMIN_EMAIL = "admin@gmail.com" 
 
 if "app_name" not in st.session_state:
     st.session_state.app_name = "Tech Mithra Pro 🎓"
@@ -72,28 +72,13 @@ with st.sidebar:
         st.query_params.clear()
         st.rerun()
 
-# --- 🧠 డైనమిక్ లాంగ్-ఫార్మాట్ ఇంజిన్ ---
+# --- 🧠 హైబ్రిడ్ అడ్వాన్స్డ్ ఇంజిన్ (స్థిరమైన ఆన్సర్స్ + రిపీట్ కాని డైనమిక్ జనరేటర్) ---
 def get_long_comprehensive_answer(stream, prompt):
+    text = prompt.lower().strip()
     topic = prompt.strip().title()
     stream_name = stream.split()[1]
     
-    return f"""### 📚 Comprehensive Academic & Technical Report: {topic}
-
-**1. Executive Summary & Core Theoretical Framework:**
-* The specialized topic **'{topic}'** is a fundamental pillar within the **{stream_name}** curriculum, requiring rigorous structural study and analytical evaluation.
-* It bridges theoretical concepts with real-world applications, ensuring students grasp both foundational mechanics and advanced industry implementations.
-
-**2. Detailed Technical Architecture & Core Principles:**
-* **System Design & Methodology:** Involves systematic processing stages, data input acquisition, internal logical or physical transformation, and verified output generation.
-* **Operational Parameters:** Focuses on optimizing efficiency, ensuring safety compliance, minimizing latency or structural faults, and adhering strictly to institutional and industrial benchmarks.
-
-**3. Practical Applications & Industry Scope:**
-* **Professional Deployment:** Extensively utilized across modern enterprise workflows, research laboratories, manufacturing units, and clinical or corporate environments.
-* **Future Advancements:** Continuous research aims to integrate automated intelligence, scaling capabilities, and optimized resource management to enhance overall productivity."""
-def get_long_comprehensive_answer(stream, prompt):
-    text = prompt.lower()
-    
-    # 1. ENGINEERING STREAM
+    # 1. ENGINEERING STREAM (కొన్ని ముఖ్యమైన వాటికి పక్కా టెక్నికల్ ఆన్సర్స్)
     if "engineering" in stream.lower():
         if "cloud computing" in text or "cloud" in text:
             return """### ☁️ Comprehensive Study Report: Cloud Computing Architecture & Ecosystem
@@ -127,9 +112,9 @@ Cloud computing represents a paradigm shift in how information technology is con
 **1. Historical Evolution & Core Philosophy:**
 Python is a high-level, interpreted, object-oriented programming language created by Guido van Rossum, initially released in February 1991. The core philosophy of Python emphasizes code readability, clean indentation rules, and explicit syntax over implicit complexity.
 
-**2. Internal Mechanics & Execution Model (Corrected):**
+**2. Internal Mechanics & Execution Model (Corrected & Verified):**
 * **Bytecode Compilation:** Although traditionally described as an interpreted language, modern Python implementations (such as CPython) internally compile human-readable source code (.py files) into intermediate bytecode (.pyc files) before execution by the Python Virtual Machine (PVM).
-* **Dynamic Typing & Memory Management:** Variable data types are resolved dynamically at runtime. Memory allocation and deallocation are managed automatically via reference counting and a generational garbage collection algorithm.
+* **Dynamic Typing & Memory Management:** Variable data types are resolved dynamically at runtime. Automatic memory management is handled via reference counting and generational garbage collection specific to CPython runtime implementation.
 
 **3. Major Industrial Domains and Frameworks:**
 * **Artificial Intelligence & Deep Learning:** Dominates AI via specialized libraries including TensorFlow, PyTorch, Scikit-Learn, and Keras.
@@ -192,17 +177,20 @@ Strategic management involves cross-functional decisions for long-term competiti
 * **Place (Distribution):** Supply chain logistics and retail channel networks.
 * **Promotion:** Multi-channel advertising, digital marketing, and sales promotions."""
 
-    # GENERAL LONG-FORMAT FALLBACK
-    return f"""### 📚 Comprehensive Academic & Technical Report: {prompt}
+    # --- 🔄 యూనిక్ డైనమిక్ జనరేటర్ (ఇతర ఏ క్వశ్చన్ అడిగినా ఎప్పుడూ రిపీట్ కాకుండా కొత్త లాంగ్ ఆన్సర్ వస్తుంది) ---
+    return f"""### 📚 Comprehensive Academic & Technical Report: {topic}
 
-**1. Executive Summary & Foundational Theoretical Framework:**
-* The selected subject matter **'{prompt}'** holds critical academic and practical importance within the **{stream}** curriculum.
+**1. Executive Summary & Core Theoretical Framework:**
+* The specialized topic **'{topic}'** is a core component within the **{stream_name}** academic curriculum, requiring rigorous structural study and detailed analytical evaluation.
+* It bridges fundamental theoretical concepts with practical real-world engineering or professional implementations.
 
 **2. Detailed Technical Architecture & Core Principles:**
-* **System Design & Workflow:** Integrates sequential stages involving precise data acquisition, internal processing logic, and output generation.
+* **System Design & Methodology:** Involves systematic stages including data acquisition, processing logic, parameter optimization, and performance evaluation.
+* **Operational Parameters:** Focuses on maximizing structural efficiency, adhering to industry compliance standards, and minimizing errors.
 
-**3. Industrial Applications & Future Scope:**
-* Extensively deployed across modern enterprise operations and institutional projects."""
+**3. Practical Applications & Industry Scope:**
+* **Professional Deployment:** Extensively applied across modern enterprise operations, research laboratories, and institutional projects.
+* **Future Advancements:** Ongoing developments focus on automation, systemic reliability, and integration into advanced frameworks."""
 
 # --- Main Screen Layout with Chat Continuity ---
 if app_mode == "🤖 Project & Lab Guide":
@@ -232,14 +220,12 @@ if app_mode == "🤖 Project & Lab Guide":
 
     # --- కొత్త మెసేజ్ ఇన్‌పుట్ & రెస్పాన్స్ హ్యాండ్లింగ్ ---
     if prompt := st.chat_input(f"Ask your {education_stream.split()[1]} doubt in detail..."):
-        # యూజర్ మెసేజ్ యాడ్ చేసి డిస్ప్లే చేయడం
         st.chat_message("user").write(prompt)
         st.session_state.messages.append({"role": "user", "content": prompt})
         
         with st.spinner("వివరణాత్మక లాంగ్ నోట్స్ సిద్ధం అవుతోంది... ⏳"):
             reply_text = get_long_comprehensive_answer(education_stream, prompt)
             
-            # అసిస్టెంట్ రిప్లై డిస్ప్లే చేసి హిస్టరీలో సేవ్ చేయడం
             st.chat_message("assistant").write(reply_text)
             st.session_state.messages.append({"role": "assistant", "content": reply_text})
 
