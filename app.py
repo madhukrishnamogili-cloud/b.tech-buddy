@@ -1,28 +1,31 @@
 import streamlit as st
 from openai import OpenAI
-from PIL import Image
 
 
-# =====================================================
-# PAGE SETTINGS
-# =====================================================
+# =========================================================
+# PAGE CONFIGURATION
+# =========================================================
 
 st.set_page_config(
-    page_title="Tech Mithra AI Pro 🎓",
+    page_title="Tech Mithra AI Pro",
     page_icon="🚀",
     layout="wide"
 )
 
 
+# =========================================================
+# APP SETTINGS
+# =========================================================
+
 ADMIN_EMAIL = "madhukrishnamogili@gmail.com"
 
 
-# =====================================================
-# SESSION SETTINGS
-# =====================================================
+# =========================================================
+# SESSION STATE
+# =========================================================
 
 if "app_name" not in st.session_state:
-    st.session_state.app_name = "Tech Mithra Pro 🎓"
+    st.session_state.app_name = "Tech Mithra AI Pro 🎓"
 
 if "app_logo" not in st.session_state:
     st.session_state.app_logo = (
@@ -39,11 +42,12 @@ if "messages" not in st.session_state:
     st.session_state.messages = []
 
 
-# =====================================================
+# =========================================================
 # LOGIN SYSTEM
-# =====================================================
+# =========================================================
 
 if "user" in st.query_params:
+
     st.session_state.logged_in = True
     st.session_state.user_email = st.query_params["user"]
 
@@ -63,7 +67,9 @@ if not st.session_state.logged_in:
 
     with col2:
 
-        email_input = st.text_input("📧 Email Address")
+        email_input = st.text_input(
+            "📧 Email Address"
+        )
 
         password_input = st.text_input(
             "🔑 Password",
@@ -78,9 +84,14 @@ if not st.session_state.logged_in:
             if email_input and password_input:
 
                 st.session_state.logged_in = True
-                st.session_state.user_email = email_input
 
-                st.query_params["user"] = email_input
+                st.session_state.user_email = (
+                    email_input
+                )
+
+                st.query_params["user"] = (
+                    email_input
+                )
 
                 st.rerun()
 
@@ -93,9 +104,9 @@ if not st.session_state.logged_in:
     st.stop()
 
 
-# =====================================================
+# =========================================================
 # OPENAI CLIENT
-# =====================================================
+# =========================================================
 
 def get_client():
 
@@ -107,7 +118,7 @@ def get_client():
             api_key=api_key
         )
 
-    except Exception:
+    except Exception as e:
 
         st.error(
             "❌ OPENAI_API_KEY కనబడలేదు. "
@@ -117,9 +128,9 @@ def get_client():
         return None
 
 
-# =====================================================
-# AI RESPONSE
-# =====================================================
+# =========================================================
+# AI RESPONSE FUNCTION
+# =========================================================
 
 def get_openai_response(
     stream_name,
@@ -130,12 +141,13 @@ def get_openai_response(
     client = get_client()
 
     if client is None:
+
         return None
 
 
-    # ---------------------------------------------
-    # PROJECT & LAB GUIDE
-    # ---------------------------------------------
+    # =====================================================
+    # PROJECT & LAB GUIDE INSTRUCTIONS
+    # =====================================================
 
     if mode == "🤖 Project & Lab Guide":
 
@@ -147,25 +159,26 @@ Answer the EXACT question asked by the student.
 
 Rules:
 
-1. First give a direct definition.
-2. Explain the topic clearly.
+1. Give a direct definition first.
+2. Explain the concept clearly.
 3. Use simple English.
 4. Give important points.
 5. Use bullet points where useful.
 6. Give examples when relevant.
-7. For engineering questions explain working principle,
-   components and applications when applicable.
-8. Do NOT give generic or unrelated answers.
-9. If the question is short, answer directly.
-10. If the user asks for a long answer,
+7. For engineering questions explain components,
+   working principle and applications when applicable.
+8. Do NOT give generic answers.
+9. Do NOT give unrelated information.
+10. If the question is short, answer directly.
+11. If the user asks for a long answer,
     provide a detailed exam-style answer.
 
 """
 
 
-    # ---------------------------------------------
-    # EXAM HACKER
-    # ---------------------------------------------
+    # =====================================================
+    # EXAM PREPARATION
+    # =====================================================
 
     elif mode == "📚 Exam Hacker":
 
@@ -173,7 +186,10 @@ Rules:
 
 You are an exam preparation assistant.
 
-Based on the exact topic given by the student, provide:
+Based on the exact topic given by the student,
+provide useful exam preparation material.
+
+Include:
 
 1. Definition
 2. Important concepts
@@ -182,15 +198,16 @@ Based on the exact topic given by the student, provide:
 5. Long-answer questions
 6. Revision notes
 
-Keep everything relevant to the topic.
-Do not generate generic answers.
+Everything must be relevant to the topic.
+
+Do not generate generic unrelated content.
 
 """
 
 
-    # ---------------------------------------------
+    # =====================================================
     # EVENT PLANNER
-    # ---------------------------------------------
+    # =====================================================
 
     elif mode == "🎪 Event Planner":
 
@@ -198,33 +215,37 @@ Do not generate generic answers.
 
 You are a professional college event planner.
 
-Create a complete plan based on the exact event topic.
+Create a complete event plan based on
+the exact event topic given by the user.
 
 Include:
 
-1. Event objective
-2. Target participants
-3. Event schedule
-4. Required resources
-5. Team responsibilities
-6. Budget considerations
-7. Promotion strategy
-8. Expected outcome
+1. Event title
+2. Event objective
+3. Target participants
+4. Event schedule
+5. Required resources
+6. Team responsibilities
+7. Budget considerations
+8. Promotion strategy
+9. Expected outcome
 
 """
 
 
-    # ---------------------------------------------
-    # PLACEMENT PREP
-    # ---------------------------------------------
+    # =====================================================
+    # PLACEMENT PREPARATION
+    # =====================================================
 
     elif mode == "💼 Placement Prep":
 
         feature_instruction = """
 
-You are a professional placement and interview preparation assistant.
+You are a professional placement and
+interview preparation assistant.
 
-Based on the exact job role requested, provide:
+Based on the exact job role or technology
+requested by the student, provide:
 
 1. Required skills
 2. Important technical topics
@@ -239,41 +260,55 @@ Based on the exact job role requested, provide:
     else:
 
         feature_instruction = """
-Answer the exact question clearly and accurately.
+
+Answer the exact question clearly
+and accurately.
+
 """
 
+
+    # =====================================================
+    # MAIN AI INSTRUCTIONS
+    # =====================================================
 
     instructions = f"""
 
 You are Tech Mithra AI Pro.
 
 Student Stream:
+
 {stream_name}
 
 {feature_instruction}
 
-IMPORTANT:
+IMPORTANT RULES:
 
-- Answer only what the user asks.
+- Answer the exact question asked.
 - Never give unrelated generic academic reports.
 - Be accurate.
 - Use simple English.
-- Use Telugu if the student asks in Telugu.
+- Use headings when useful.
+- Use bullet points when useful.
+- If the user asks in Telugu, answer in Telugu.
+- If the user asks in English, answer in English.
 
 """
 
+
+    # =====================================================
+    # OPENAI API CALL
+    # =====================================================
 
     try:
 
         response = client.responses.create(
 
-            model="gpt-5.6-luna",
+            model="gpt-4o-mini",
 
             instructions=instructions,
 
             input=question
         )
-
 
         return response.output_text
 
@@ -281,14 +316,14 @@ IMPORTANT:
     except Exception as e:
 
         return (
-            "❌ AI Error: "
+            "❌ AI Error:\n\n"
             + str(e)
         )
 
 
-# =====================================================
+# =========================================================
 # SIDEBAR
-# =====================================================
+# =========================================================
 
 with st.sidebar:
 
@@ -302,11 +337,13 @@ with st.sidebar:
     )
 
 
+    # =====================================================
     # ADMIN SETTINGS
+    # =====================================================
 
     if (
-        st.session_state.user_email
-        == ADMIN_EMAIL
+        st.session_state.user_email.lower()
+        == ADMIN_EMAIL.lower()
     ):
 
         with st.expander(
@@ -328,14 +365,23 @@ with st.sidebar:
                 "💾 Save Settings"
             ):
 
-                st.session_state.app_name = new_name
-                st.session_state.app_logo = new_logo
+                st.session_state.app_name = (
+                    new_name
+                )
+
+                st.session_state.app_logo = (
+                    new_logo
+                )
 
                 st.rerun()
 
 
     st.divider()
 
+
+    # =====================================================
+    # STREAM SELECTION
+    # =====================================================
 
     education_stream = st.selectbox(
 
@@ -352,11 +398,16 @@ with st.sidebar:
             "📈 MBA (Management)"
 
         ]
+
     )
 
 
     st.divider()
 
+
+    # =====================================================
+    # FEATURE SELECTION
+    # =====================================================
 
     app_mode = st.radio(
 
@@ -373,14 +424,20 @@ with st.sidebar:
             "💼 Placement Prep"
 
         ]
+
     )
 
 
     st.divider()
 
 
+    # =====================================================
+    # LOGOUT
+    # =====================================================
+
     if st.button(
-        "🚪 Logout"
+        "🚪 Logout",
+        use_container_width=True
     ):
 
         st.session_state.logged_in = False
@@ -394,21 +451,33 @@ with st.sidebar:
         st.rerun()
 
 
-# =====================================================
+# =========================================================
+# MAIN APP
+# =========================================================
+
+st.title(
+    f"🚀 {st.session_state.app_name}"
+)
+
+
+# =========================================================
 # PROJECT & LAB GUIDE
-# =====================================================
+# =========================================================
 
 if app_mode == "🤖 Project & Lab Guide":
 
     st.header(
-        f"🤖 {st.session_state.app_name}"
+        "🤖 AI Academic & Technical Assistant"
+    )
+
+    st.caption(
+        f"Selected Stream: {education_stream}"
     )
 
 
-    stream_short = education_stream
-
-
-    # CHAT HISTORY
+    # =====================================================
+    # SHOW CHAT HISTORY
+    # =====================================================
 
     for msg in st.session_state.messages:
 
@@ -421,7 +490,9 @@ if app_mode == "🤖 Project & Lab Guide":
             )
 
 
-    # QUESTION INPUT
+    # =====================================================
+    # CHAT INPUT
+    # =====================================================
 
     prompt = st.chat_input(
         "Ask any academic or technical question..."
@@ -433,9 +504,13 @@ if app_mode == "🤖 Project & Lab Guide":
 
         # USER MESSAGE
 
-        with st.chat_message("user"):
+        with st.chat_message(
+            "user"
+        ):
 
-            st.markdown(prompt)
+            st.markdown(
+                prompt
+            )
 
 
         st.session_state.messages.append(
@@ -453,7 +528,9 @@ if app_mode == "🤖 Project & Lab Guide":
 
         # AI MESSAGE
 
-        with st.chat_message("assistant"):
+        with st.chat_message(
+            "assistant"
+        ):
 
             with st.spinner(
                 "🤖 Tech Mithra AI is thinking..."
@@ -461,7 +538,7 @@ if app_mode == "🤖 Project & Lab Guide":
 
                 reply_text = get_openai_response(
 
-                    stream_short,
+                    education_stream,
 
                     prompt,
 
@@ -477,7 +554,7 @@ if app_mode == "🤖 Project & Lab Guide":
                     )
 
 
-        # SAVE AI MESSAGE
+        # SAVE AI RESPONSE
 
         if reply_text:
 
@@ -494,14 +571,19 @@ if app_mode == "🤖 Project & Lab Guide":
             )
 
 
-# =====================================================
+# =========================================================
 # EVENT PLANNER
-# =====================================================
+# =========================================================
 
 elif app_mode == "🎪 Event Planner":
 
     st.header(
         "🎪 Event & Workshop Planner"
+    )
+
+
+    st.write(
+        "Enter your college event or workshop topic."
     )
 
 
@@ -516,15 +598,16 @@ elif app_mode == "🎪 Event Planner":
 
 
     if st.button(
-        "Generate Event Plan"
+        "Generate Event Plan",
+        use_container_width=True
     ):
 
 
-        if event_topic:
+        if event_topic.strip():
 
 
             with st.spinner(
-                "Creating Event Plan..."
+                "🤖 Creating Event Plan..."
             ):
 
 
@@ -541,7 +624,9 @@ elif app_mode == "🎪 Event Planner":
 
                 if answer:
 
-                    st.markdown(answer)
+                    st.markdown(
+                        answer
+                    )
 
 
         else:
@@ -551,14 +636,19 @@ elif app_mode == "🎪 Event Planner":
             )
 
 
-# =====================================================
+# =========================================================
 # EXAM HACKER
-# =====================================================
+# =========================================================
 
 elif app_mode == "📚 Exam Hacker":
 
     st.header(
         "📚 AI Exam Preparation"
+    )
+
+
+    st.write(
+        "Enter a subject or topic for exam preparation."
     )
 
 
@@ -573,15 +663,16 @@ elif app_mode == "📚 Exam Hacker":
 
 
     if st.button(
-        "Generate Exam Questions"
+        "Generate Exam Preparation",
+        use_container_width=True
     ):
 
 
-        if subject_name:
+        if subject_name.strip():
 
 
             with st.spinner(
-                "Preparing Exam Questions..."
+                "🤖 Preparing Exam Notes..."
             ):
 
 
@@ -598,24 +689,31 @@ elif app_mode == "📚 Exam Hacker":
 
                 if answer:
 
-                    st.markdown(answer)
+                    st.markdown(
+                        answer
+                    )
 
 
         else:
 
             st.warning(
-                "Please enter a subject or topic."
+                "Please enter a Subject or Topic."
             )
 
 
-# =====================================================
+# =========================================================
 # PLACEMENT PREP
-# =====================================================
+# =========================================================
 
 elif app_mode == "💼 Placement Prep":
 
     st.header(
         "💼 Placement & Career Preparation"
+    )
+
+
+    st.write(
+        "Enter your target job role or technology."
     )
 
 
@@ -630,15 +728,16 @@ elif app_mode == "💼 Placement Prep":
 
 
     if st.button(
-        "Generate Interview Guide"
+        "Generate Interview Guide",
+        use_container_width=True
     ):
 
 
-        if role_name:
+        if role_name.strip():
 
 
             with st.spinner(
-                "Preparing Interview Guide..."
+                "🤖 Preparing Interview Guide..."
             ):
 
 
@@ -655,11 +754,13 @@ elif app_mode == "💼 Placement Prep":
 
                 if answer:
 
-                    st.markdown(answer)
+                    st.markdown(
+                        answer
+                    )
 
 
         else:
 
             st.warning(
-                "Please enter a Job Role."
+                "Please enter a Job Role or Technology."
             )
