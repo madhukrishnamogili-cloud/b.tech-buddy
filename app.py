@@ -45,7 +45,7 @@ if "user_email" not in st.session_state:
 
 def get_client():
     try:
-        api_key = st.secrets["OPENAI_API_KEY"]
+        api_key = st.secrets["AQ.Ab8RN6I3jgQZO2vSrPEKFThDE70F-Y0UwMus30JK3CbBZc4eDw"]
         return OpenAI(api_key=api_key)
     except Exception:
         st.error(
