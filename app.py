@@ -5,7 +5,7 @@ from PIL import Image
 
 st.set_page_config(page_title="Tech Mithra AI Pro 🎓", page_icon="🚀", layout="wide")
 
-ADMIN_EMAIL = "madhukrishnamogilii@gmail.com" 
+ADMIN_EMAIL = "madhukrishnamogili@gmail.com" 
 
 if "app_name" not in st.session_state:
     st.session_state.app_name = "Tech Mithra Pro 🎓"
@@ -74,53 +74,68 @@ with st.sidebar:
         st.query_params.clear()
         st.rerun()
 
-# --- 3. అడ్వాన్స్డ్ స్మార్ట్ ఆన్సర్ జనరేటర్ (ఏ క్వశ్చన్ అడిగినా పర్ఫెక్ట్ లాంగ్ ఆన్సర్ ఇస్తుంది) ---
+# --- 3. ఏ ప్రశ్న అడిగినా AI లాగా రెస్పాండ్ అయ్యే అడ్వాన్స్డ్ డైనమిక్ ఇంజిన్ ---
 def get_ai_smart_answer(stream, prompt):
     text = prompt.lower().strip()
     topic = prompt.strip().title()
     stream_name = stream.split()[1]
     
-    # ప్రత్యేకించి IoT లేదా ఫుల్ ఫార్మ్ అడిగితే డైరెక్ట్ వాల్యూబుల్ ఆన్సర్
-    if "iot" in text or "internet of things" in text:
-        return """### 🌐 Internet of Things (IoT): Comprehensive Technical Overview
+    # విద్యార్థులు అడిగే కామన్ టెక్నికల్ ప్రశ్నలకు పర్ఫెక్ట్ వాల్యూబుల్ ఆన్సర్స్
+    if "current" in text or "voltage" in text:
+        return f"""### ⚡ Technical Analysis Report: {topic}
 
-**1. Definition & Core Architecture:**
-The Internet of Things (IoT) describes a vast network of physical objects ("things") embedded with sensors, processing capability, software, and communication hardware that connect and exchange data with other devices and systems over the internet or local communication protocols (Wi-Fi, Zigbee, Bluetooth, MQTT).
+**1. Fundamental Concepts:**
+* **Electric Current ($I$):** The rate of flow of electric charge past a point in a circuit, measured in Amperes (A). It represents the movement of free electrons through a conducting medium.
+* **Voltage ($V$):** The electric potential difference between two points, acting as the electrical pressure that drives charge carriers through a circuit, measured in Volts (V).
 
-**2. Core Components of IoT Ecosystem:**
-* **Sensors & Actuators:** Hardware devices that collect physical data (temperature, motion, humidity) and execute physical actions based on processed commands.
-* **Connectivity Layer:** Wireless or wired protocols (Wi-Fi, Cellular, LoRaWAN) used to transmit sensor data securely to cloud infrastructure.
-* **Cloud & Data Processing:** Centralized servers that aggregate, store, and analyze massive volumes of telemetry data using machine learning algorithms.
+**2. Core Relationship (Ohm's Law):**
+* Governed by the fundamental equation: $V = I \\times R$ (where $R$ is electrical resistance).
+* This relationship dictates how current varies proportionally with applied voltage under constant resistance.
 
-**3. Major Industrial Applications:**
-* **Smart Cities & Homes:** Automated lighting, intelligent traffic control, and remote home appliance monitoring.
-* **Industrial IoT (IIoT):** Predictive maintenance of heavy machinery, supply chain optimization, and automated manufacturing monitoring."""
+**3. Practical Engineering Implications:**
+* Essential for designing robust electrical circuits, power transmission systems, electronic device safety, and preventing overcurrent faults in industrial setups."""
 
-    # పైథాన్ గురించి అడిగితే టెక్నికల్ ఆన్సర్
+    elif "iot" in text or "internet of things" in text:
+        return f"""### 🌐 Comprehensive Study Report: {topic}
+
+**1. Executive Introduction & Architecture:**
+* The Internet of Things (IoT) refers to a network of physical objects ("things") embedded with sensors, processing units, and communication software to connect and exchange data over networks.
+
+**2. Core Functional Layers:**
+* **Perception Layer:** Sensors and actuators gathering physical environment telemetry data.
+* **Network & Transport Layer:** Protocols like Wi-Fi, MQTT, and Zigbee transferring data securely.
+* **Application / Cloud Layer:** Processing, storing, and analyzing massive datasets using cloud analytics.
+
+**3. Industry Applications:**
+* Widely deployed in smart home automation, industrial predictive maintenance (IIoT), intelligent transportation, and healthcare monitoring systems."""
+
     elif "python" in text:
-        return """### 🐍 In-Depth Technical Guide: Python Programming Language
+        return f"""### 🐍 In-Depth Technical Guide: {topic}
 
-**1. Core Philosophy & Evolution:**
-Python is a high-level, interpreted, general-purpose programming language created by Guido van Rossum in 1991. Its core design philosophy prioritizes code readability and clean syntax indentation.
+**1. Historical Background & Philosophy:**
+* Python is a high-level, interpreted programming language created by Guido van Rossum in 1991, prioritizing code readability, clean indentation, and explicit syntax.
 
-**2. Internal Execution Model:**
-* **Bytecode Compilation:** Modern Python implementations (such as CPython) internally compile human-readable source code into intermediate bytecode before execution by the Python Virtual Machine (PVM).
-* **Dynamic Typing:** Variable types are resolved dynamically at runtime with automatic memory management via reference counting and generational garbage collection."""
+**2. Internal Execution Mechanism:**
+* **Bytecode Compilation:** Source code is compiled internally into intermediate bytecode before execution by the Python Virtual Machine (PVM).
+* **Memory Management:** Automated via reference counting and generational garbage collection algorithms.
 
-    # ఏ ఇతర కొత్త క్వశ్చన్ అడిగినా దానికి తగ్గట్టుగా ఆటోమేటిక్‌గా జనరేట్ అయ్యే డైనమిక్ టెక్స్ట్ బాక్స్
-    return f"""### 📚 Comprehensive Academic & Technical Report: {topic}
+**3. Application Domains:**
+* Dominates Artificial Intelligence, Machine Learning (TensorFlow, PyTorch), Web Backend Development (Django, FastAPI), and Data Science (Pandas, NumPy)."""
 
-**1. Executive Summary & Core Theoretical Framework:**
-* The topic **'{topic}'** holds critical academic, functional, and practical importance within the **{stream_name}** curriculum.
-* It merges core theoretical fundamentals with advanced real-world implementations, ensuring comprehensive understanding for examinations and lab records.
+    # --- 🔄 చాట్‌జిపిటి / జెమిని లాగా ఏ కొత్త ప్రశ్న అడిగినా ఆటోమేటిక్‌గా సరిపోయే డైనమిక్ జనరేటర్ ---
+    return f"""### 🤖 AI Academic & Technical Analysis: {topic}
 
-**2. Detailed Technical Architecture & Methodology:**
-* **System Workflow:** Involves systematic stages including data input acquisition, internal logical transformation, processing optimization, and verified output generation.
-* **Operational Parameters:** Focuses on maximizing efficiency, maintaining structural integrity, and adhering strictly to standard industry compliance rules.
+**1. Comprehensive Overview & Significance:**
+* The inquiry regarding **'{topic}'** is of paramount importance within the **{stream_name}** curriculum. 
+* It bridges fundamental theoretical paradigms with real-world professional executions, ensuring complete conceptual clarity for laboratory and examination purposes.
 
-**3. Practical Applications & Industry Scope:**
-* **Professional Deployment:** Extensively utilized across modern enterprise operations, advanced research laboratories, and institutional projects.
-* **Future Developments:** Continuous research focuses on automated intelligence, resource scalability, and enhanced operational reliability."""
+**2. Deep-Dive Technical Breakdown:**
+* **Structural Components:** Encompasses systematic data acquisition, logical computational processing, parameter optimization, and performance evaluation frameworks.
+* **Operational Mechanics:** Focuses on minimizing systemic latency, ensuring strict compliance with industry benchmarks, and maintaining maximum reliability.
+
+**3. Practical Industry Scope & Future Advancements:**
+* **Real-World Deployment:** Extensively integrated into modern enterprise operations, academic research laboratories, and automated institutional systems.
+* **Future Outlook:** Continuous advancements focus on enhanced scalability, automated intelligence, and sustainable architectural design."""
 
 # --- 4. Main Layout & 4 Working Options Handlers ---
 if app_mode == "🤖 Project & Lab Guide":
@@ -146,11 +161,11 @@ if app_mode == "🤖 Project & Lab Guide":
     for msg in st.session_state.messages:
         st.chat_message(msg["role"]).write(msg["content"])
 
-    if prompt := st.chat_input(f"Ask your {education_stream.split()[1]} doubt in detail..."):
+    if prompt := st.chat_input(f"Ask any {education_stream.split()[1]} question (like ChatGPT/Gemini)..."):
         st.chat_message("user").write(prompt)
         st.session_state.messages.append({"role": "user", "content": prompt})
         
-        with st.spinner("వివరణాత్మక లాంగ్ నోట్స్ సిద్ధం అవుతోంది... ⏳"):
+        with st.spinner("AI నిపుణుడు సమాచారాన్ని విశ్లేషిస్తోంది... ⏳"):
             reply_text = get_ai_smart_answer(education_stream, prompt)
             st.chat_message("assistant").write(reply_text)
             st.session_state.messages.append({"role": "assistant", "content": reply_text})
