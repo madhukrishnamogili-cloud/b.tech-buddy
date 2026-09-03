@@ -21,6 +21,11 @@ st.set_page_config(
 
 ADMIN_EMAIL = "madhukrishnamogili@gmail.com"
 
+# 🔐 OPENAI API CLIENT
+def get_client():
+    api_key = st.secrets["OPENAI_API_KEY"]
+    return OpenAI(api_key=api_key)
+    
 if "app_name" not in st.session_state:
     st.session_state.app_name = "Tech Mithra AI Pro 🎓"
 
@@ -43,15 +48,17 @@ if "user_email" not in st.session_state:
 # OPENAI CLIENT
 # =========================================================
 
+# =========================================================
+# OPENAI CLIENT
+# =========================================================
+
 def get_client():
     try:
-        api_key = st.secrets["AQ.Ab8RN6I3jgQZO2vSrPEKFThDE70F-Y0UwMus30JK3CbBZc4eDw"]
+        api_key = st.secrets["OPENAI_API_KEY"]
         return OpenAI(api_key=api_key)
-    except Exception:
-        st.error(
-            "❌ OpenAI API Key కనబడలేదు. "
-            "Streamlit Secrets లో OPENAI_API_KEY add చేయండి."
-        )
+
+    except Exception as e:
+        st.error("❌ OpenAI API Key not found.")
         return None
 
 
