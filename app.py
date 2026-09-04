@@ -1,54 +1,73 @@
 import streamlit as st
+import os
+import base64
 from google import genai
+from google.genai import types
 from PIL import Image
-import time
+
 
 # ============================================================
-# TECH MITHRA AI PRO - COMPLETE SINGLE FILE APP
+# TECH MITHRA AI PRO - COMPLETE STREAMLIT APP
 # ============================================================
 
 st.set_page_config(
     page_title="Tech Mithra AI Pro",
     page_icon="🚀",
-    layout="wide",
-    initial_sidebar_state="expanded"
+    layout="wide"
 )
 
-APP_NAME = "Tech Mithra AI Pro 🎓"
-LOGO_URL = "https://cdn-icons-png.flaticon.com/512/3135/3135715.png"
+
+# ============================================================
+# CONFIGURATION
+# ============================================================
+
+APP_NAME = "🚀 Tech Mithra AI Pro"
+
+TEXT_MODELS = [
+    "gemini-3.8-flash",
+    "gemini-3.7-flash",
+    "gemini-3.6-flash"
+]
+
+IMAGE_MODELS = [
+    "gemini-3.1-flash-image",
+    "gemini-2.5-flash-image"
+]
+
+
+# ============================================================
+# GET SECRETS SAFELY
+# ============================================================
+
+def get_secret(name, default=""):
+    try:
+        return st.secrets.get(name, default)
+    except Exception:
+        return os.getenv(name, default)
+
+
+GEMINI_API_KEY = get_secret("GEMINI_API_KEY", "")
+APP_PASSWORD = get_secret("APP_PASSWORD", "")
+
 
 # ============================================================
 # SESSION STATE
 # ============================================================
 
-defaults = {
-    "logged_in": False,
-    "user_email": "",
-    "messages": [],
-    "event_result": "",
-    "image_prompt_result": "",
-    "exam_result": "",
-    "placement_result": "",
-    "last_model": "None"
-}
+if "logged_in" not in st.session_state:
+    st.session_state.logged_in = False
 
-for key, value in defaults.items():
-    if key not in st.session_state:
-        st.session_state[key] = value
+if "user_email" not in st.session_state:
+    st.session_state.user_email = ""
 
+if "messages" not in st.session_state:
+    st.session_state.messages = []
 
-# ============================================================
-# GEMINI API KEY
-# Add in Streamlit Secrets:
-# GEMINI_API_KEY = "your_api_key_here"
-# ============================================================
+if "app_name" not in st.session_state:
+    st.session_state.app_name = APP_NAME
 
-def get_api_key():
-    try:
-        key = st.secrets.get("GEMINI_API_KEY", "")
-        return key.strip()
-    except Exception:
-        return ""
+if "last_generated_prompt" not in st.session_state:
+    st.session_state.last_generated_prompt = ""
 
 
 # ============================================================
@@ -56,131 +75,133 @@ def get_api_key():
 # ============================================================
 
 def get_client():
-
-    api_key = get_api_key()
-
-    if not api_key:
+    if not GEMINI_API_KEY:
         return None
 
     try:
-        return genai.Client(api_key=api_key)
+        return genai.Client(api_key=GEMINI_API_KEY)
     except Exception:
         return None
 
 
 # ============================================================
-# AI MODELS WITH FALLBACK
+# GENERATE TEXT WITH AUTOMATIC MODEL FALLBACK
 # ============================================================
 
-MODEL_LIST = [
-    "gemini-3.6-flash",
-]
-
-
-# ============================================================
-# MAIN AI FUNCTION
-# ============================================================
-
-def ask_ai(question, instruction, image=None):
-
+def generate_ai_text(question, system_instruction="You are a helpful AI assistant."):
     client = get_client()
 
     if client is None:
-        return """
-### ❌ Gemini API Key Not Configured
-
-Please add your API key in Streamlit Secrets.
-
-Example:
-
-GEMINI_API_KEY = "YOUR_GEMINI_API_KEY"
-"""
+        return (
+            "❌ **Gemini API Key is not configured.**\n\n"
+            "Add your API key in Streamlit Secrets:\n\n"
+            "`GEMINI_API_KEY = \"YOUR_API_KEY\"`"
+        )
 
     last_error = ""
 
-    for model in MODEL_LIST:
-
-        for attempt in range(2):
-
-            try:
-
-                if image is not None:
-
-                    contents = [
-                        instruction,
-                        f"User Question: {question}",
-                        image
-                    ]
-
-                else:
-
-                    contents = f"""
-{instruction}
-
-User Question:
-{question}
-"""
-
-                response = client.models.generate_content(
-                    model=model,
-                    contents=contents
+    for model_name in TEXT_MODELS:
+        try:
+            response = client.models.generate_content(
+                model=model_name,
+                contents=question,
+                config=types.GenerateContentConfig(
+                    system_instruction=system_instruction
                 )
+            )
 
-                if hasattr(response, "text"):
+            if response and response.text:
+                return response.text
 
-                    if response.text:
+        except Exception as e:
+            last_error = str(e)
 
-                        st.session_state.last_model = model
-
-                        return response.text
-
-            except Exception as e:
-
-                last_error = str(e)
-
-                if attempt == 0:
-                    time.sleep(1)
-
-    return f"""
-### ❌ AI Service Error
-
-The AI could not answer right now.
-
-Error:
-
-{last_error}
-
-Please check your API key, internet connection,
-API quota, and Gemini model availability.
-"""
+    return (
+        "❌ **AI Error**\n\n"
+        f"Could not generate a response.\n\n"
+        f"Details: `{last_error}`\n\n"
+        "Please check:\n"
+        "- Your Gemini API key\n"
+        "- Streamlit Secrets\n"
+        "- API quota\n"
+        "- Internet connection"
+    )
 
 
 # ============================================================
-# LOGIN CREDENTIALS
-# Optional Streamlit Secrets:
-# APP_EMAIL = "your@email.com"
-# APP_PASSWORD = "yourpassword"
+# IMAGE ANALYSIS
 # ============================================================
 
-def get_login_credentials():
+def analyze_image(question, image):
+    client = get_client()
 
-    try:
+    if client is None:
+        return "❌ Gemini API key is not configured."
 
-        email = st.secrets.get(
-            "APP_EMAIL",
-            ""
-        )
+    last_error = ""
 
-        password = st.secrets.get(
-            "APP_PASSWORD",
-            ""
-        )
+    for model_name in TEXT_MODELS:
+        try:
+            response = client.models.generate_content(
+                model=model_name,
+                contents=[
+                    question,
+                    image
+                ],
+                config=types.GenerateContentConfig(
+                    system_instruction=(
+                        "You are an expert academic and technical assistant. "
+                        "Analyze the uploaded image carefully and answer the user's "
+                        "question accurately. If it contains an exam question, "
+                        "provide the correct answer with a clear explanation."
+                    )
+                )
+            )
 
-        return email.strip(), password.strip()
+            if response and response.text:
+                return response.text
 
-    except Exception:
+        except Exception as e:
+            last_error = str(e)
 
-        return "", ""
+    return f"❌ Image analysis failed: {last_error}"
+
+
+# ============================================================
+# GENERATE IMAGE
+# ============================================================
+
+def generate_image(prompt, aspect_ratio="1:1"):
+    client = get_client()
+
+    if client is None:
+        return None, "❌ Gemini API key is not configured."
+
+    last_error = ""
+
+    for model_name in IMAGE_MODELS:
+        try:
+            interaction = client.interactions.create(
+                model=model_name,
+                input=prompt,
+                response_format={
+                    "type": "image",
+                    "mime_type": "image/png",
+                    "aspect_ratio": aspect_ratio,
+                    "image_size": "1K"
+                }
+            )
+
+            if interaction.output_image and interaction.output_image.data:
+                image_bytes = base64.b64decode(
+                    interaction.output_image.data
+                )
+                return image_bytes, ""
+
+        except Exception as e:
+            last_error = str(e)
+
+    return None, f"❌ Image generation failed: {last_error}"
 
 
 # ============================================================
@@ -189,29 +210,25 @@ def get_login_credentials():
 
 if not st.session_state.logged_in:
 
-    st.markdown(
-        """
-        <div style="text-align:center; padding-top:50px;">
-            <h1>🚀 Tech Mithra AI Pro</h1>
-            <h3>🔐 Student Login</h3>
-        </div>
-        """,
-        unsafe_allow_html=True
+    st.title("🔐 Tech Mithra AI Pro Login")
+
+    st.write(
+        "Login once and continue using all AI features during your session."
     )
 
-    col1, col2, col3 = st.columns(
-        [1, 2, 1]
-    )
+    col1, col2, col3 = st.columns([1, 2, 1])
 
     with col2:
 
-        email = st.text_input(
-            "📧 Email Address"
+        email_input = st.text_input(
+            "📧 Email Address",
+            placeholder="Enter your email"
         )
 
-        password = st.text_input(
+        password_input = st.text_input(
             "🔑 Password",
-            type="password"
+            type="password",
+            placeholder="Enter password"
         )
 
         if st.button(
@@ -219,53 +236,21 @@ if not st.session_state.logged_in:
             use_container_width=True
         ):
 
-            correct_email, correct_password = (
-                get_login_credentials()
-            )
+            if not email_input or not password_input:
 
-            # Secure configured login
-            if correct_email and correct_password:
+                st.error(
+                    "Please enter both email and password."
+                )
 
-                if (
-                    email.strip().lower()
-                    == correct_email.lower()
-                    and password == correct_password
-                ):
+            elif APP_PASSWORD and password_input != APP_PASSWORD:
 
-                    st.session_state.logged_in = True
-                    st.session_state.user_email = email.strip()
+                st.error("Incorrect password.")
 
-                    st.success(
-                        "✅ Login Successful!"
-                    )
-
-                    st.rerun()
-
-                else:
-
-                    st.error(
-                        "❌ Invalid Email or Password."
-                    )
-
-            # Development fallback login
             else:
 
-                if email.strip() and password.strip():
-
-                    st.session_state.logged_in = True
-                    st.session_state.user_email = email.strip()
-
-                    st.success(
-                        "✅ Login Successful!"
-                    )
-
-                    st.rerun()
-
-                else:
-
-                    st.error(
-                        "Please enter Email and Password."
-                    )
+                st.session_state.logged_in = True
+                st.session_state.user_email = email_input
+                st.rerun()
 
     st.stop()
 
@@ -276,33 +261,10 @@ if not st.session_state.logged_in:
 
 with st.sidebar:
 
-    try:
+    st.title("🚀 Tech Mithra AI Pro")
 
-        st.image(
-            LOGO_URL,
-            width=100
-        )
-
-    except Exception:
-
-        st.write("🚀")
-
-    st.title(APP_NAME)
-
-    st.caption(
-        f"👤 Logged in: {st.session_state.user_email}"
-    )
-
-    st.divider()
-
-    st.subheader("🧠 AI Brain")
-
-    ai_mode = st.selectbox(
-        "Select AI Mode",
-        [
-            "🚀 Auto AI",
-            "⚡ Fast AI"
-        ]
+    st.success(
+        f"Logged in as:\n\n{st.session_state.user_email}"
     )
 
     st.divider()
@@ -310,34 +272,37 @@ with st.sidebar:
     education_stream = st.selectbox(
         "📚 Select Stream",
         [
-            "⚡ Engineering (B.Tech / EEE / CSE)",
-            "💊 Pharmacy (B.Pharm / Pharm.D)",
-            "🩺 Nursing (B.Sc / GNM)",
-            "📈 MBA (Management)"
+            "Engineering (B.Tech / EEE / CSE)",
+            "Pharmacy (B.Pharm / Pharm.D)",
+            "Nursing (B.Sc / GNM)",
+            "MBA (Management)",
+            "General Learning"
         ]
     )
 
     st.divider()
 
     app_mode = st.radio(
-        "🚀 Select Feature",
+        "Select Feature",
         [
             "🤖 Project & Lab Guide",
             "🎪 Event Planner",
-            "📚 Exam Hacker",
-            "💼 Placement Prep"
+            "📚 Exam Preparation",
+            "💼 Placement Preparation"
         ]
     )
 
     st.divider()
 
-    if st.button(
-        "🗑️ Clear Chat",
-        use_container_width=True
-    ):
+    st.caption("AI Model System")
 
-        st.session_state.messages = []
-        st.rerun()
+    st.write("Text AI:")
+    st.code(TEXT_MODELS[0])
+
+    st.write("Image AI:")
+    st.code(IMAGE_MODELS[0])
+
+    st.divider()
 
     if st.button(
         "🚪 Logout",
@@ -351,104 +316,88 @@ with st.sidebar:
 
 
 # ============================================================
-# MAIN APP HEADER
+# STREAM NAME
 # ============================================================
 
-st.title("🚀 Tech Mithra AI Pro")
-
-st.caption(
-    f"📚 Stream: {education_stream}"
-)
-
-st.caption(
-    f"🧠 AI Mode: {ai_mode}"
-)
+stream_name = education_stream
 
 
 # ============================================================
-# PROJECT AND LAB GUIDE
+# PROJECT & LAB GUIDE
 # ============================================================
 
 if app_mode == "🤖 Project & Lab Guide":
 
-    st.header(
-        "🤖 Project & Lab Guide"
+    st.title("🤖 Project & Lab Guide")
+
+    st.write(
+        "Ask any academic, technical, engineering or general question."
     )
 
     tab1, tab2, tab3 = st.tabs(
         [
-            "💬 Ask AI",
+            "💬 Text Chat",
             "🖼️ Upload Photo",
-            "📸 Camera"
+            "📸 Camera Photo"
         ]
     )
 
-    # --------------------------------------------------------
+
+    # ========================================================
     # TEXT CHAT
-    # --------------------------------------------------------
+    # ========================================================
 
     with tab1:
 
         for message in st.session_state.messages:
 
-            with st.chat_message(
-                message["role"]
-            ):
+            with st.chat_message(message["role"]):
+                st.markdown(message["content"])
 
-                st.markdown(
-                    message["content"]
-                )
-
-        question = st.chat_input(
+        prompt = st.chat_input(
             "Ask any question..."
         )
 
-        if question:
+        if prompt:
 
             st.session_state.messages.append(
                 {
                     "role": "user",
-                    "content": question
+                    "content": prompt
                 }
             )
 
             with st.chat_message("user"):
+                st.markdown(prompt)
 
-                st.markdown(question)
+            academic_instruction = f"""
+You are Tech Mithra AI Pro, an intelligent academic and technical assistant.
+
+The student belongs to:
+{stream_name}
+
+Answer the question accurately.
+
+Rules:
+1. First give a direct answer or definition.
+2. Explain in simple English.
+3. Use headings and bullet points.
+4. For academic questions, provide exam-friendly answers.
+5. For engineering questions, explain working principles and applications.
+6. For programming questions, provide correct code when appropriate.
+7. For long-answer questions, give detailed explanations.
+8. Do not invent facts.
+"""
 
             with st.chat_message("assistant"):
 
                 with st.spinner(
-                    "🧠 AI is thinking..."
+                    "🤖 Tech Mithra AI is thinking..."
                 ):
 
-                    instruction = f"""
-You are Tech Mithra AI Pro,
-an intelligent educational AI assistant.
-
-Student Stream:
-{education_stream}
-
-Follow these rules:
-
-1. Understand the exact question.
-2. Give the direct answer first.
-3. Answer accurately.
-4. Use simple language.
-5. Telugu question -> Telugu answer.
-6. English question -> English answer.
-7. For technical questions explain:
-   - Definition
-   - Working principle
-   - Important points
-   - Applications
-8. For exam questions give exam-friendly answers.
-9. Do not provide unrelated information.
-"""
-
-                    answer = ask_ai(
-                        question,
-                        instruction
+                    answer = generate_ai_text(
+                        prompt,
+                        academic_instruction
                     )
 
                     st.markdown(answer)
@@ -460,174 +409,112 @@ Follow these rules:
                 }
             )
 
-    # --------------------------------------------------------
-    # IMAGE UPLOAD
-    # --------------------------------------------------------
+
+    # ========================================================
+    # UPLOAD PHOTO
+    # ========================================================
 
     with tab2:
 
-        st.subheader(
-            "🖼️ Upload Question / Notes / Diagram"
-        )
+        st.subheader("🖼️ Upload Question or Lab Image")
 
         uploaded_file = st.file_uploader(
-            "Upload Image",
-            type=[
-                "jpg",
-                "jpeg",
-                "png",
-                "webp"
-            ]
+            "Upload an image",
+            type=["jpg", "jpeg", "png"]
         )
 
         if uploaded_file:
 
-            try:
+            image = Image.open(uploaded_file)
 
-                uploaded_image = Image.open(
-                    uploaded_file
-                )
+            st.image(
+                image,
+                caption="Uploaded Image",
+                use_container_width=True
+            )
 
-                st.image(
-                    uploaded_image,
-                    caption="Uploaded Image",
-                    use_container_width=True
-                )
+            image_question = st.text_input(
+                "Ask a question about this image",
+                placeholder="Example: Give the correct answer to this question"
+            )
 
-                image_question = st.text_input(
-                    "Ask about this image"
-                )
+            if st.button(
+                "🤖 Analyze Uploaded Image",
+                key="analyze_upload"
+            ):
 
-                if st.button(
-                    "🤖 Analyze Image",
-                    use_container_width=True
+                question = image_question
+
+                if not question:
+                    question = (
+                        "Analyze this image and provide the correct "
+                        "answer with a detailed explanation."
+                    )
+
+                with st.spinner(
+                    "🤖 Analyzing image..."
                 ):
 
-                    if not image_question.strip():
+                    result = analyze_image(
+                        question,
+                        image
+                    )
 
-                        image_question = """
-Read the image carefully.
-If it contains questions, answer them.
-If it contains answers, check whether
-they are right or wrong.
-"""
+                    st.markdown(result)
 
-                    with st.spinner(
-                        "🧠 Analyzing image..."
-                    ):
 
-                        instruction = f"""
-You are an educational
-image-analysis AI assistant.
-
-Student Stream:
-{education_stream}
-
-Analyze the uploaded image carefully.
-
-If it contains:
-
-- Questions: give correct answers.
-- Student answers: check right or wrong.
-- Circuit diagrams: explain components and working.
-- Technical diagrams: explain clearly.
-- Notes: explain and summarize.
-
-Do not invent text that is not visible.
-"""
-
-                        answer = ask_ai(
-                            image_question,
-                            instruction,
-                            uploaded_image
-                        )
-
-                        st.markdown(answer)
-
-            except Exception as e:
-
-                st.error(
-                    f"Image Error: {e}"
-                )
-
-    # --------------------------------------------------------
-    # CAMERA
-    # --------------------------------------------------------
+    # ========================================================
+    # CAMERA PHOTO
+    # ========================================================
 
     with tab3:
 
-        st.subheader(
-            "📸 Take Question Photo"
-        )
+        st.subheader("📸 Take a Photo")
 
         camera_photo = st.camera_input(
-            "Take a Photo"
+            "Take a photo of your question"
         )
 
         if camera_photo:
 
-            try:
+            camera_image = Image.open(
+                camera_photo
+            )
 
-                camera_image = Image.open(
-                    camera_photo
-                )
+            st.image(
+                camera_image,
+                caption="Captured Image",
+                use_container_width=True
+            )
 
-                st.image(
-                    camera_image,
-                    caption="Captured Image",
-                    use_container_width=True
-                )
+            camera_question = st.text_input(
+                "Ask about the camera image",
+                placeholder="Example: Solve this question"
+            )
 
-                camera_question = st.text_input(
-                    "Ask about this photo",
-                    key="camera_question"
-                )
+            if st.button(
+                "🤖 Analyze Camera Image",
+                key="analyze_camera"
+            ):
 
-                if st.button(
-                    "🤖 Analyze Photo",
-                    use_container_width=True
+                question = camera_question
+
+                if not question:
+                    question = (
+                        "Read the question in this image and "
+                        "provide the correct answer with explanation."
+                    )
+
+                with st.spinner(
+                    "🤖 AI is analyzing..."
                 ):
 
-                    if not camera_question.strip():
+                    result = analyze_image(
+                        question,
+                        camera_image
+                    )
 
-                        camera_question = """
-Read the question in this image
-and give the correct answer.
-"""
-
-                    with st.spinner(
-                        "🧠 Reading image..."
-                    ):
-
-                        instruction = f"""
-You are an expert academic assistant.
-
-Student Stream:
-{education_stream}
-
-Analyze the image carefully.
-
-Read visible questions accurately.
-
-Give correct exam-friendly answers.
-
-If multiple questions are present,
-answer them one by one.
-"""
-
-                        answer = ask_ai(
-                            camera_question,
-                            instruction,
-                            camera_image
-                        )
-
-                        st.markdown(answer)
-
-            except Exception as e:
-
-                st.error(
-                    f"Camera Error: {e}"
-                )
+                    st.markdown(result)
 
 
 # ============================================================
@@ -636,12 +523,14 @@ answer them one by one.
 
 elif app_mode == "🎪 Event Planner":
 
-    st.header(
-        "🎪 Event & Workshop Planner"
+    st.title("🎪 AI Event & Workshop Planner")
+
+    st.write(
+        "Generate event plans, schedules, posters and AI image prompts."
     )
 
     event_name = st.text_input(
-        "🎯 Event Name",
+        "🎯 Event Name / Topic",
         placeholder="Example: PLC Workshop 2026"
     )
 
@@ -649,276 +538,315 @@ elif app_mode == "🎪 Event Planner":
         "Event Type",
         [
             "Technical Workshop",
+            "College Event",
             "Seminar",
-            "Hackathon",
-            "Project Expo",
             "Guest Lecture",
-            "College Fest",
+            "Hackathon",
             "Cultural Event",
-            "Sports Event"
+            "Project Exhibition",
+            "Other"
         ]
     )
 
     audience = st.text_input(
-        "👥 Target Audience"
+        "Target Audience",
+        placeholder="Example: B.Tech EEE Students"
     )
 
-    location = st.text_input(
-        "📍 Event Location"
-    )
+    col1, col2 = st.columns(2)
 
-    if st.button(
-        "📋 Generate Event Plan",
-        use_container_width=True
-    ):
 
-        if event_name.strip():
+    # ========================================================
+    # EVENT PLAN
+    # ========================================================
 
-            event_question = f"""
+    with col1:
+
+        if st.button(
+            "📋 Generate Complete Event Plan",
+            use_container_width=True
+        ):
+
+            if not event_name:
+
+                st.warning(
+                    "Please enter an event name."
+                )
+
+            else:
+
+                prompt = f"""
+Create a complete professional event plan.
+
 Event Name: {event_name}
-
 Event Type: {event_type}
-
 Target Audience: {audience}
-
-Location: {location}
-"""
-
-            event_instruction = """
-You are a professional college event planner.
-
-Create a complete event plan.
+Education Stream: {stream_name}
 
 Include:
 
-1. Event Overview
-2. Objectives
-3. Target Audience
-4. Venue Requirements
-5. Equipment Required
-6. Organizing Team
-7. Team Responsibilities
-8. Complete Event Schedule
-9. Budget Categories
-10. Promotion Plan
-11. Registration Plan
-12. Event-Day Checklist
-13. Safety Guidelines
-14. Expected Outcome
+1. Event introduction
+2. Event objectives
+3. Required resources
+4. Organizing committee
+5. Detailed schedule
+6. Registration plan
+7. Venue setup
+8. Technical requirements
+9. Budget categories
+10. Promotion strategy
+11. Certificates
+12. Safety and management plan
+13. Expected outcomes
+
+Use professional headings and bullet points.
 """
 
-            with st.spinner(
-                "🧠 Creating Event Plan..."
-            ):
+                with st.spinner(
+                    "🎪 Creating event plan..."
+                ):
 
-                st.session_state.event_result = ask_ai(
-                    event_question,
-                    event_instruction
+                    answer = generate_ai_text(
+                        prompt,
+                        "You are an expert college event planner."
+                    )
+
+                    st.markdown(answer)
+
+
+    # ========================================================
+    # IMAGE PROMPT
+    # ========================================================
+
+    with col2:
+
+        if st.button(
+            "🖼️ Generate Poster Image Prompt",
+            use_container_width=True
+        ):
+
+            if not event_name:
+
+                st.warning(
+                    "Please enter an event name."
                 )
 
-        else:
+            else:
 
-            st.warning(
-                "Please enter Event Name."
-            )
+                prompt_request = f"""
+Create a highly detailed AI image generation prompt for a professional college event poster.
 
-    if st.session_state.event_result:
+Event Name: {event_name}
+Event Type: {event_type}
+Audience: {audience}
 
-        st.subheader(
-            "📋 Generated Event Plan"
-        )
+The prompt should include:
+- Professional modern college design
+- Event-related visual elements
+- Space for event title
+- Space for date and venue
+- Cinematic lighting
+- High quality
+- Social media poster style
+"""
 
-        st.markdown(
-            st.session_state.event_result
-        )
+                with st.spinner(
+                    "✍️ Generating image prompt..."
+                ):
+
+                    generated_prompt = generate_ai_text(
+                        prompt_request,
+                        "You are an expert AI image prompt engineer."
+                    )
+
+                    st.session_state.last_generated_prompt = (
+                        generated_prompt
+                    )
+
+                    st.markdown(
+                        "### 🎨 Generated Image Prompt"
+                    )
+
+                    st.code(
+                        generated_prompt
+                    )
+
+
+    # ========================================================
+    # TEXT TO IMAGE
+    # ========================================================
 
     st.divider()
 
-    st.subheader(
-        "🎨 AI Event Image Prompt Generator"
+    st.subheader("🎨 Text to Image Generator")
+
+    default_prompt = (
+        st.session_state.last_generated_prompt
+        if st.session_state.last_generated_prompt
+        else ""
     )
 
-    image_style = st.selectbox(
-        "Image Style",
-        [
-            "Realistic Photography",
-            "Cinematic",
-            "Professional College Event",
-            "Modern Poster",
-            "Futuristic",
-            "Social Media Banner"
-        ]
+    image_prompt = st.text_area(
+        "Enter Image Prompt",
+        value=default_prompt,
+        height=180,
+        placeholder=(
+            "Example: A professional college technical "
+            "workshop poster, futuristic technology theme..."
+        )
     )
 
     aspect_ratio = st.selectbox(
-        "Aspect Ratio",
+        "Image Aspect Ratio",
         [
-            "1:1 Instagram Post",
-            "4:5 Instagram Portrait",
-            "9:16 Instagram Story",
-            "16:9 YouTube Thumbnail"
+            "1:1",
+            "16:9",
+            "9:16"
         ]
     )
 
     if st.button(
-        "✨ Generate Image Prompt",
+        "✨ Generate AI Image",
         use_container_width=True
     ):
 
-        if event_name.strip():
+        if not image_prompt:
 
-            prompt_question = f"""
-Event Name: {event_name}
-
-Event Type: {event_type}
-
-Target Audience: {audience}
-
-Location: {location}
-
-Image Style: {image_style}
-
-Aspect Ratio: {aspect_ratio}
-"""
-
-            prompt_instruction = """
-You are an expert AI image prompt engineer.
-
-Create a detailed text-to-image prompt.
-
-Include:
-
-- Main event subject
-- Students and participants
-- Venue environment
-- Stage setup
-- Decorations
-- Lighting
-- Camera angle
-- Composition
-- Professional realistic details
-- High quality
-
-Return only the final
-image-generation prompt.
-"""
-
-            with st.spinner(
-                "🎨 Generating Image Prompt..."
-            ):
-
-                st.session_state.image_prompt_result = ask_ai(
-                    prompt_question,
-                    prompt_instruction
-                )
+            st.warning(
+                "Please enter an image prompt."
+            )
 
         else:
 
-            st.warning(
-                "Please enter Event Name first."
-            )
+            with st.spinner(
+                "🎨 Generating AI image..."
+            ):
 
-    if st.session_state.image_prompt_result:
+                image_bytes, error = generate_image(
+                    image_prompt,
+                    aspect_ratio
+                )
 
-        st.text_area(
-            "🎨 Generated AI Image Prompt",
-            value=st.session_state.image_prompt_result,
-            height=300
-        )
+                if image_bytes:
+
+                    st.image(
+                        image_bytes,
+                        caption="Generated by Tech Mithra AI",
+                        use_container_width=True
+                    )
+
+                    st.download_button(
+                        "⬇️ Download Image",
+                        data=image_bytes,
+                        file_name="tech_mithra_ai_image.png",
+                        mime="image/png"
+                    )
+
+                else:
+
+                    st.error(error)
 
 
 # ============================================================
-# EXAM HACKER
+# EXAM PREPARATION
 # ============================================================
 
-elif app_mode == "📚 Exam Hacker":
+elif app_mode == "📚 Exam Preparation":
 
-    st.header(
-        "📚 Exam Hacker"
+    st.title("📚 AI Exam Preparation")
+
+    st.write(
+        "Generate important questions, answers and revision notes."
     )
 
-    subject_or_question = st.text_input(
-        "📖 Enter Subject / Question",
-        placeholder="Example: What is an Electric Vehicle?"
+    subject_name = st.text_input(
+        "📖 Enter Subject Name",
+        placeholder="Example: Electrical Machines"
     )
 
-    answer_type = st.selectbox(
-        "Select Answer Type",
+    exam_topic = st.text_input(
+        "🎯 Enter Chapter / Topic (Optional)",
+        placeholder="Example: Transformers"
+    )
+
+    exam_type = st.selectbox(
+        "Select Preparation Type",
         [
-            "Direct Answer",
-            "2 Marks Answer",
-            "5 Marks Answer",
-            "10 Marks Answer",
-            "Long Answer",
             "Important Questions",
-            "Revision Notes",
-            "MCQs"
+            "Short Answers",
+            "5 Marks Answers",
+            "10 Marks Answers",
+            "Long Answers",
+            "Last Minute Revision Notes"
         ]
     )
 
     if st.button(
-        "📝 Generate Exam Answer",
+        "📝 Generate Exam Preparation",
         use_container_width=True
     ):
 
-        if subject_or_question.strip():
+        if not subject_name:
 
-            exam_instruction = f"""
-You are an expert university exam assistant.
-
-Student Stream:
-{education_stream}
-
-Required Answer Type:
-{answer_type}
-
-Rules:
-
-1. Answer the exact question.
-2. Give technically correct information.
-3. Use simple language.
-4. Use headings and bullet points.
-5. Make the answer suitable for exams.
-6. For long answers provide
-   detailed explanation.
-7. Telugu question -> Telugu answer.
-8. English question -> English answer.
-"""
-
-            with st.spinner(
-                "🧠 Preparing Answer..."
-            ):
-
-                st.session_state.exam_result = ask_ai(
-                    subject_or_question,
-                    exam_instruction
-                )
+            st.warning(
+                "Please enter the subject name."
+            )
 
         else:
 
-            st.warning(
-                "Please enter a question."
-            )
+            prompt = f"""
+Create exam preparation material.
 
-    if st.session_state.exam_result:
+Education Stream:
+{stream_name}
 
-        st.subheader(
-            "📝 AI Exam Answer"
-        )
+Subject:
+{subject_name}
 
-        st.markdown(
-            st.session_state.exam_result
-        )
+Topic:
+{exam_topic}
+
+Preparation Type:
+{exam_type}
+
+Make the content accurate and exam-friendly.
+
+Use:
+- Clear headings
+- Important definitions
+- Bullet points
+- Simple explanations
+- Relevant examples
+- Key points for revision
+"""
+
+            with st.spinner(
+                "📚 Preparing exam material..."
+            ):
+
+                answer = generate_ai_text(
+                    prompt,
+                    "You are an expert academic tutor."
+                )
+
+                st.markdown(answer)
 
 
 # ============================================================
 # PLACEMENT PREPARATION
 # ============================================================
 
-elif app_mode == "💼 Placement Prep":
+elif app_mode == "💼 Placement Preparation":
 
-    st.header(
-        "💼 Placement & Career Preparation"
+    st.title("💼 AI Placement & Career Preparation")
+
+    st.write(
+        "Prepare for technical interviews, HR interviews and placements."
+    )
+
+    company_name = st.text_input(
+        "🏢 Target Company (Optional)",
+        placeholder="Example: TCS, Infosys, Kia"
     )
 
     job_role = st.text_input(
@@ -926,123 +854,68 @@ elif app_mode == "💼 Placement Prep":
         placeholder="Example: Electrical Engineer"
     )
 
-    company_name = st.text_input(
-        "🏢 Target Company (Optional)",
-        placeholder="Example: Kia India"
-    )
-
-    experience_level = st.selectbox(
-        "Experience Level",
+    preparation_type = st.selectbox(
+        "Preparation Type",
         [
-            "Fresher",
-            "Final Year Student",
-            "Internship Candidate"
+            "Technical Interview Questions",
+            "HR Interview Questions",
+            "Aptitude Preparation",
+            "Resume Preparation",
+            "Project Explanation",
+            "Complete Placement Roadmap"
         ]
     )
 
     if st.button(
-        "💼 Generate Placement Guide",
+        "🚀 Generate Placement Guide",
         use_container_width=True
     ):
 
-        if job_role.strip():
+        if not job_role:
 
-            placement_question = f"""
-Target Job Role:
-{job_role}
+            st.warning(
+                "Please enter your target job role."
+            )
+
+        else:
+
+            prompt = f"""
+Create a professional placement preparation guide.
+
+Student Stream:
+{stream_name}
 
 Target Company:
 {company_name}
 
-Experience Level:
-{experience_level}
+Target Job Role:
+{job_role}
 
-Student Stream:
-{education_stream}
-"""
+Preparation Type:
+{preparation_type}
 
-            placement_instruction = """
-You are an expert placement
-and career mentor.
+Include relevant:
+- Interview questions
+- Model answers
+- Technical concepts
+- HR questions
+- Project discussion tips
+- Skills to learn
+- Preparation roadmap
 
-Create a complete placement
-preparation guide.
-
-Include:
-
-1. Job Role Overview
-2. Required Technical Skills
-3. Required Soft Skills
-4. Important Technical Topics
-5. Technical Interview Questions
-6. Sample Answers
-7. HR Interview Questions
-8. Self Introduction Example
-9. Resume Tips
-10. Project Explanation Tips
-11. Interview Tips
-12. 7-Day Preparation Plan
+Make it clear and suitable for students.
 """
 
             with st.spinner(
-                "🧠 Preparing Placement Guide..."
+                "💼 Preparing placement guide..."
             ):
 
-                st.session_state.placement_result = ask_ai(
-                    placement_question,
-                    placement_instruction
+                answer = generate_ai_text(
+                    prompt,
+                    "You are an expert placement trainer and career mentor."
                 )
 
-        else:
-
-            st.warning(
-                "Please enter Target Job Role."
-            )
-
-    if st.session_state.placement_result:
-
-        st.subheader(
-            "🎯 Placement Preparation Guide"
-        )
-
-        st.markdown(
-            st.session_state.placement_result
-        )
-
-
-# ============================================================
-# SYSTEM STATUS
-# ============================================================
-
-st.divider()
-
-col1, col2, col3 = st.columns(3)
-
-with col1:
-
-    if get_api_key():
-
-        st.success(
-            "🟢 Gemini API Connected"
-        )
-
-    else:
-
-        st.warning(
-            "🟡 API Key Not Configured"
-        )
-
-with col2:
-
-    st.info(
-        f"🧠 AI Mode: {ai_mode}"
-    )
-
-with col3:
-
-    st.info(
-        f"🤖 Model: {st.session_state.last_model}"
-    )
+                st.markdown(answer)
 
 
 # ============================================================
@@ -1053,15 +926,14 @@ st.divider()
 
 st.markdown(
     """
-    <div style="text-align:center; padding:20px;">
+    <div style="text-align:center;">
         <h3>🚀 Tech Mithra AI Pro</h3>
-        <p>🧠 Smart AI Academic Assistant</p>
         <p>
-            🤖 Project & Lab Guide |
-            🖼️ Image Analysis |
-            🎪 Event Planner |
-            📚 Exam Hacker |
-            💼 Placement Prep
+        AI Academic Assistant |
+        Project Guide |
+        Event Planner |
+        Exam Preparation |
+        Placement Preparation
         </p>
     </div>
     """,
