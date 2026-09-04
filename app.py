@@ -155,64 +155,91 @@ if not st.session_state.login_checked:
 # ============================================================
 # LOGIN PAGE
 # ============================================================
+# ==============================
+# 🔐 ONE-TIME LOGIN SYSTEM
+# ==============================
 
+import streamlit as st
+
+# ఇప్పటికే login అయ్యారా అని check చేయడం
+if "logged_in" not in st.session_state:
+    st.session_state.logged_in = False
+
+if "user_email" not in st.session_state:
+    st.session_state.user_email = ""
+
+
+# URL లో login email ఉంటే automatic login
+if "user" in st.query_params:
+    saved_email = st.query_params["user"]
+
+    if saved_email:
+        st.session_state.logged_in = True
+        st.session_state.user_email = saved_email
+
+
+# LOGIN PAGE
 if not st.session_state.logged_in:
 
-    st.markdown(
-        f"<div class='main-title'>{APP_NAME}</div>",
-        unsafe_allow_html=True
+    st.title("🚀 Tech Mithra AI Pro")
+    st.subheader("🔐 Sign In")
+
+    email = st.text_input(
+        "📧 Enter your Email Address",
+        placeholder="example@gmail.com"
     )
 
-    st.markdown(
-        "<div class='subtitle'>Login once and use your AI Academic Assistant</div>",
-        unsafe_allow_html=True
+    password = st.text_input(
+        "🔑 Password",
+        type="password"
     )
 
-    col1, col2, col3 = st.columns([1, 2, 1])
+    if st.button("🚀 Sign In", use_container_width=True):
 
-    with col2:
+        # Email మరియు password ఖాళీగా లేకపోతే login
+        if email.strip() != "" and password.strip() != "":
 
-        with st.container(border=True):
+            st.session_state.logged_in = True
+            st.session_state.user_email = email.strip()
 
-            st.subheader("🔐 Login")
+            # Browser URL లో email save చేయడం
+            st.query_params["user"] = email.strip()
 
-            email = st.text_input(
-                "📧 Email Address",
-                placeholder="Enter your email"
+            st.success("✅ Login Successful!")
+
+            st.rerun()
+
+        else:
+
+            st.error(
+                "❌ Please enter Email and Password"
             )
-
-            password = st.text_input(
-                "🔑 Password",
-                type="password",
-                placeholder="Enter password"
-            )
-
-            if st.button(
-                "🚀 Login to Tech Mithra AI Pro",
-                use_container_width=True
-            ):
-
-                correct_password = get_app_password()
-
-                if not email.strip():
-                    st.error("Please enter your email.")
-
-                elif password != correct_password:
-                    st.error("Incorrect password.")
-
-                else:
-
-                    st.session_state.logged_in = True
-                    st.session_state.user_email = email
-                    st.session_state.login_checked = True
-
-                    st.query_params["login"] = "true"
-                    st.query_params["user"] = email
-
-                    st.rerun()
 
     st.stop()
 
+
+# ==============================
+# LOGGED IN USER
+# ==============================
+
+st.sidebar.success(
+    f"👤 Logged in as: {st.session_state.user_email}"
+)
+
+
+# ==============================
+# LOGOUT BUTTON
+# ==============================
+
+if st.sidebar.button("🚪 Logout"):
+
+    st.session_state.logged_in = False
+    st.session_state.user_email = ""
+
+    # URL నుండి login information తొలగించడం
+    st.query_params.clear()
+
+    st.rerun()
 
 # ============================================================
 # AI RESPONSE FUNCTION
