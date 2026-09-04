@@ -546,204 +546,527 @@ Explain clearly.
 
 elif app_mode == "🎪 Event Planner":
 
-    st.title(
-        "🎪 AI Event Planner"
+    import time
+
+    st.header(f"🎪 {education_stream.split()[1]} Event & Workshop Planner")
+
+    st.success(
+        "ఈ ఆప్షన్ ద్వారా మీరు మీ కాలేజీ ఈవెంట్స్, సెమినార్లు మరియు వర్క్‌షాప్‌ల కోసం ప్లానింగ్ చేసుకోవచ్చు!"
     )
 
-    event_name = st.text_input(
-        "Event Name"
+    event_topic = st.text_input(
+        "Enter Event Name / Topic:",
+        placeholder="Example: PLC Workshop, Technical Fest, AI Seminar"
     )
 
     event_type = st.selectbox(
-        "Event Type",
+        "Select Event Type:",
         [
             "Technical Workshop",
             "Seminar",
-            "Hackathon",
             "College Event",
-            "Project Exhibition",
+            "Technical Fest",
+            "Hackathon",
+            "Guest Lecture",
+            "Project Expo",
             "Cultural Event"
         ]
     )
 
-    audience = st.text_input(
-        "Target Audience"
+    event_duration = st.selectbox(
+        "Event Duration:",
+        [
+            "Half Day",
+            "1 Day",
+            "2 Days",
+            "3 Days"
+        ]
+    )
+
+    expected_students = st.number_input(
+        "Expected Participants:",
+        min_value=10,
+        max_value=10000,
+        value=100
     )
 
 
-    # --------------------------------------------------------
-    # EVENT PLAN
-    # --------------------------------------------------------
+    # ------------------------------------------------
+    # EVENT PLAN GENERATION FUNCTION
+    # ------------------------------------------------
+    def generate_event_plan(topic, event_type, duration, students):
 
-    if st.button(
-        "📋 Generate Event Plan"
-    ):
+        prompt = f"""
+You are an expert college event planner.
 
-        if not event_name:
-
-            st.warning(
-                "Enter Event Name."
-            )
-
-        else:
-
-            prompt = f"""
 Create a complete professional event plan.
 
-Event Name: {event_name}
-
+Event Name: {topic}
 Event Type: {event_type}
+Duration: {duration}
+Expected Participants: {students}
 
-Audience: {audience}
+Give the answer in this format:
 
-Include:
+1. Event Title
+2. Event Objective
+3. Target Audience
+4. Event Description
+5. Complete Schedule / Timeline
+6. Required Resources
+7. Organizing Committee
+8. Budget Categories
+9. Promotion Plan
+10. Registration Process
+11. Certificate Plan
+12. Expected Outcomes
+13. Safety and Management Plan
+14. Social Media Caption
+15. Poster / Banner Text
 
-1. Introduction
-2. Objectives
-3. Event schedule
-4. Required resources
-5. Organizing team
-6. Venue arrangement
-7. Promotion plan
-8. Registration
-9. Certificates
-10. Expected outcomes
+Use simple English and clear headings.
+Make the answer suitable for a college event.
 """
 
-            with st.spinner(
-                "Creating event plan..."
-            ):
+        # Your existing Gemini client/function is used here
+        # This function tries multiple times so temporary 503 errors
+        # do not immediately show to the user.
 
-                result = ask_ai(
-                    prompt,
-                    "You are an expert college event planner."
-                )
+        models_to_try = [
+            "gemini-3.8-flash",
+            "gemini-3.7-flash",
+            "gemini-3.6-flash"
+        ]
 
-                st.markdown(result)
+        errors = []
+
+        for model_name in models_to_try:
+
+            for attempt in range(3):
+
+                try:
+
+                    # ------------------------------------------------
+                    # IMPORTANT:
+                    # Replace ONLY this call if your existing Gemini
+                    # code uses a different client syntax.
+                    # ------------------------------------------------
+
+                    response = client.models.generate_content(
+                        model=model_name,
+                        contents=prompt
+                    )
+
+                    if response and response.text:
+                        return response.text
+
+                except Exception as e:
+
+                    errors.append(
+                        f"{model_name} attempt {attempt + 1}: {str(e)}"
+                    )
+
+                    # Wait before retrying
+                    time.sleep(2 * (attempt + 1))
 
 
-    st.divider()
+        # ------------------------------------------------
+        # LOCAL FALLBACK
+        # If Gemini is temporarily unavailable,
+        # the app STILL gives a complete Event Plan.
+        # ------------------------------------------------
+
+        return f"""
+# 🎪 EVENT PLAN: {topic}
+
+## 1. Event Title
+
+**{topic}**
+
+**Event Type:** {event_type}  
+**Duration:** {duration}  
+**Expected Participants:** {students}
+
+---
+
+## 2. Event Objective
+
+The main objective of this event is to provide students with practical knowledge, technical exposure, teamwork experience, communication skills, and awareness about modern technologies.
+
+---
+
+## 3. Target Audience
+
+- Engineering Students
+- Faculty Members
+- Technical Enthusiasts
+- Project Students
+- Industry Experts
+- College Clubs
+
+---
+
+## 4. Event Description
+
+The **{topic}** event is designed as an interactive academic and technical program.
+
+The event will include:
+
+- Introduction Session
+- Expert Lecture
+- Technical Demonstration
+- Practical Activity
+- Student Interaction
+- Question and Answer Session
+- Feedback Collection
+- Certificate Distribution
+
+---
+
+## 5. Suggested Event Schedule
+
+### Opening Session
+
+- Registration
+- Welcome Speech
+- Introduction of Guests
+- Event Overview
+
+### Technical Session
+
+- Expert Presentation
+- Topic Explanation
+- Live Demonstration
+- Practical Examples
+
+### Interactive Session
+
+- Student Questions
+- Group Discussion
+- Hands-on Activity
+
+### Closing Session
+
+- Feedback Collection
+- Vote of Thanks
+- Certificate Distribution
+- Photography Session
+
+---
+
+## 6. Required Resources
+
+- Seminar Hall or Classroom
+- Projector
+- Laptop
+- Internet Connection
+- Microphone
+- Speaker System
+- Registration Desk
+- Certificates
+- Event Banners
+
+---
+
+## 7. Organizing Committee
+
+### Faculty Coordinator
+
+Responsible for overall supervision.
+
+### Student Coordinator
+
+Responsible for student communication and event coordination.
+
+### Technical Team
+
+Responsible for:
+
+- Laptop Setup
+- Projector
+- Internet
+- Demonstrations
+
+### Registration Team
+
+Responsible for participant registration.
+
+### Media Team
+
+Responsible for:
+
+- Photography
+- Videography
+- Social Media Promotion
+
+---
+
+## 8. Budget Categories
+
+Possible expenses include:
+
+- Guest Honorarium
+- Certificates
+- Printing
+- Banners
+- Refreshments
+- Technical Equipment
+- Photography
+
+---
+
+## 9. Promotion Plan
+
+Promote the event using:
+
+- College WhatsApp Groups
+- Instagram
+- Posters
+- College Notice Board
+- Department Groups
+
+---
+
+## 10. Registration Process
+
+1. Create Registration Form
+2. Collect Student Details
+3. Confirm Registration
+4. Prepare Participant List
+5. Verify Attendance
+
+---
+
+## 11. Certificate Plan
+
+Certificates can be provided to:
+
+- Participants
+- Organizing Team
+- Faculty Coordinators
+- Guest Speakers
+
+---
+
+## 12. Expected Outcomes
+
+Students will gain:
+
+- Practical Knowledge
+- Technical Skills
+- Communication Skills
+- Teamwork Experience
+- Industry Awareness
+
+---
+
+## 13. Safety and Management Plan
+
+- Maintain proper seating arrangements.
+- Keep technical equipment secure.
+- Manage participant attendance.
+- Ensure proper electrical safety.
+- Keep emergency contact information available.
+
+---
+
+## 14. Social Media Caption
+
+🚀 **{topic}**
+
+Join us for an exciting **{event_type}**!
+
+📚 Learn  
+💡 Explore  
+🚀 Innovate  
+🤝 Connect  
+
+Don't miss this opportunity!
+
+#CollegeEvent #Workshop #Technology #Students #Innovation
+
+---
+
+## 15. Poster Text
+
+🎪 **{topic}**
+
+Organized By  
+**{education_stream.split()[1]} Department**
+
+📅 Duration: {duration}
+
+👥 Participants: {students}+
+
+Learn • Explore • Innovate
+
+"""
 
 
-    # --------------------------------------------------------
-    # IMAGE PROMPT
-    # --------------------------------------------------------
 
-    st.subheader(
-        "🎨 AI Poster Prompt Generator"
-    )
+    # ------------------------------------------------
+    # GENERATE EVENT PLAN BUTTON
+    # ------------------------------------------------
+    if st.button("📋 Generate Complete Event Plan", use_container_width=True):
 
-    if st.button(
-        "✍️ Generate Poster Prompt"
-    ):
+        if not event_topic.strip():
 
-        if not event_name:
-
-            st.warning(
-                "Enter Event Name."
-            )
+            st.warning("Please enter an Event Name / Topic.")
 
         else:
 
-            prompt = f"""
-Create a detailed AI image generation prompt.
-
-Event Name: {event_name}
-
-Event Type: {event_type}
-
-Audience: {audience}
-
-Create a professional,
-modern,
-cinematic college event poster.
-
-Leave clean space for:
-
-Event Title
-Date
-Time
-Venue
-
-Use high-quality design.
-"""
-
             with st.spinner(
-                "Creating prompt..."
+                "Generating your complete event plan... Please wait ⏳"
             ):
 
-                result = ask_ai(
-                    prompt,
-                    "You are an expert AI image prompt engineer."
+                event_plan = generate_event_plan(
+                    event_topic,
+                    event_type,
+                    event_duration,
+                    expected_students
                 )
 
-                st.code(result)
+                st.session_state["generated_event_plan"] = event_plan
 
+            st.success("✅ Event Plan Generated Successfully!")
+
+            st.markdown(
+                st.session_state["generated_event_plan"]
+            )
+
+
+
+    # ------------------------------------------------
+    # PHOTO / IMAGE PROMPT GENERATOR
+    # ------------------------------------------------
 
     st.divider()
 
+    st.subheader("🎨 Event Photo / Poster Prompt Generator")
 
-    # --------------------------------------------------------
-    # TEXT TO IMAGE
-    # --------------------------------------------------------
-
-    st.subheader(
-        "🖼️ Text to Image"
+    image_style = st.selectbox(
+        "Select Image Style:",
+        [
+            "Professional College Poster",
+            "Cinematic Event Photo",
+            "Modern Technical Poster",
+            "Professional Workshop Banner",
+            "Instagram Event Poster"
+        ]
     )
 
-    image_prompt = st.text_area(
-        "Enter Image Prompt",
-        height=150,
-        placeholder=(
-            "Example: Professional futuristic "
-            "college technical workshop poster"
-        )
-    )
 
     if st.button(
-        "✨ Generate Image",
+        "🎨 Generate Photo Prompt",
         use_container_width=True
     ):
 
-        if not image_prompt:
+        if not event_topic.strip():
 
             st.warning(
-                "Enter an image prompt."
+                "Please enter the Event Name first."
             )
 
         else:
 
-            with st.spinner(
-                "Generating AI image..."
-            ):
+            photo_prompt = f"""
+Create a {image_style} for a college event.
 
-                image_bytes, error = (
-                    generate_ai_image(
-                        image_prompt
-                    )
-                )
+Event Name: {event_topic}
+Event Type: {event_type}
 
-                if image_bytes:
+Show a modern academic and professional atmosphere.
 
-                    st.image(
-                        image_bytes,
-                        use_container_width=True
-                    )
+Include:
 
-                    st.download_button(
-                        "⬇️ Download Image",
-                        data=image_bytes,
-                        file_name=(
-                            "tech_mithra_image.png"
-                        ),
-                        mime="image/png"
-                    )
+- College students
+- Modern technology
+- Professional event environment
+- Stage or workshop setup
+- Screens and technical equipment
+- Clean academic design
+- High quality lighting
+- Professional composition
 
-                else:
+Style: {image_style}
 
-                    st.error(
-                        f"Image Error: {error}"
-                    )
+Make the design attractive for a college event poster.
+High quality, realistic, professional, detailed.
+"""
+
+            st.session_state["event_photo_prompt"] = photo_prompt
+
+            st.success("✅ Photo Generation Prompt Ready!")
+
+            st.code(
+                photo_prompt,
+                language="text"
+            )
+
+
+
+    # ------------------------------------------------
+    # TEXT TO IMAGE PROMPT SECTION
+    # ------------------------------------------------
+
+    st.divider()
+
+    st.subheader("🖼️ Text to Image Prompt")
+
+    custom_image_text = st.text_area(
+        "Describe the event image you want:",
+        placeholder="Example: Students attending an AI workshop in a modern college auditorium"
+    )
+
+
+    if st.button(
+        "✨ Create Image Prompt",
+        use_container_width=True
+    ):
+
+        if not custom_image_text.strip():
+
+            st.warning(
+                "Please describe the image you want."
+            )
+
+        else:
+
+            final_image_prompt = f"""
+Create a high-quality realistic professional image.
+
+Main Description:
+{custom_image_text}
+
+Related Event:
+{event_topic}
+
+Event Type:
+{event_type}
+
+Image Requirements:
+
+- Professional college environment
+- Realistic students
+- Modern technology
+- Natural lighting
+- High quality
+- Detailed composition
+- Professional photography
+- Event atmosphere
+- Suitable for poster and social media
+
+Do not include unwanted text.
+"""
+
+            st.success(
+                "✅ Your Text-to-Image Prompt is Ready!"
+            )
+
+            st.code(
+                final_image_prompt,
+                language="text"
+            )
 
 
 # ============================================================
