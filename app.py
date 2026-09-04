@@ -1,13 +1,12 @@
 import io
+import time
 import streamlit as st
 from PIL import Image
 from google import genai
-from google.genai import types
 
 
 # ============================================================
 # TECH MITHRA AI PRO - COMPLETE APP
-# NO LOGIN SYSTEM
 # ============================================================
 
 st.set_page_config(
@@ -17,29 +16,71 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
+
+# ============================================================
+# APP SETTINGS
+# ============================================================
+
 APP_NAME = "🚀 Tech Mithra AI Pro"
 
-TEXT_MODEL = "gemini-2.5-flash"
-IMAGE_MODEL = "gemini-2.5-flash-image"
+# Fast text models with fallback support
+TEXT_MODELS = [
+    "gemini-3.5-flash-lite",
+    "gemini-3.5-flash",
+    "gemini-2.5-flash-lite",
+    "gemini-2.5-flash"
+]
+
+# Image generation model
+IMAGE_MODEL = "gemini-3.1-flash-image"
 
 
 # ============================================================
-# API KEY
+# CUSTOM CSS
+# ============================================================
+
+st.markdown("""
+<style>
+
+.block-container {
+    max-width: 1200px;
+    padding-top: 2rem;
+    padding-bottom: 2rem;
+}
+
+div[data-testid="stChatInput"] {
+    position: fixed;
+    bottom: 20px;
+    background-color: white;
+    z-index: 999;
+}
+
+</style>
+""", unsafe_allow_html=True)
+
+
+# ============================================================
+# GET API KEY
 # ============================================================
 
 def get_api_key():
+
     try:
         return st.secrets["GEMINI_API_KEY"]
     except Exception:
-        return ""
+        return None
 
+
+# ============================================================
+# CREATE GEMINI CLIENT
+# ============================================================
 
 @st.cache_resource
 def get_client(api_key):
-    if not api_key:
-        return None
 
-    return genai.Client(api_key=api_key)
+    return genai.Client(
+        api_key=api_key
+    )
 
 
 # ============================================================
@@ -49,191 +90,280 @@ def get_client(api_key):
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
+if "api_error" not in st.session_state:
+    st.session_state.api_error = ""
+
 
 # ============================================================
 # AI RESPONSE FUNCTION
 # ============================================================
 
-def get_ai_response(question, mode="general", image=None):
+def get_ai_response(
+    question,
+    mode="general",
+    image=None
+):
 
     api_key = get_api_key()
 
     if not api_key:
-        return "❌ Gemini API Key not found. Add GEMINI_API_KEY in Streamlit Secrets."
 
-    try:
-        client = get_client(api_key)
-    except Exception:
-        return "❌ Unable to connect to Gemini AI."
+        return (
+            "❌ Gemini API Key not found.\n\n"
+            "Please add GEMINI_API_KEY in Streamlit Secrets."
+        )
 
-    if not question or not question.strip():
+    if not question:
+
         return "Please enter a question."
 
-    question = question.strip()
+    try:
+
+        client = get_client(api_key)
+
+    except Exception as e:
+
+        return (
+            "❌ Unable to connect to Gemini API.\n\n"
+            f"Error: {str(e)}"
+        )
+
+
+    # ========================================================
+    # SYSTEM INSTRUCTIONS
+    # ========================================================
 
     if mode == "project":
 
-        instruction = f"""
-You are Tech Mithra AI Pro, a helpful AI assistant.
+        prompt = f"""
+You are Tech Mithra AI Pro, an intelligent academic assistant.
 
-Answer the following question accurately and clearly:
-
+User Question:
 {question}
 
-Rules:
-- Answer directly.
+Instructions:
+- Answer accurately and directly.
 - Use simple English.
-- Keep small questions short.
-- For academic questions, give clear explanations.
-- If the user asks for 2 marks, give a short exam answer.
-- If the user asks for 5 marks, give a medium detailed answer.
-- If the user asks for 10 marks or long answer, explain in detail.
+- For small questions, give a fast and short answer.
+- For academic questions, explain clearly.
+- For 2 marks questions, give a short answer.
+- For 5 marks questions, give a medium detailed answer.
+- For 10 marks questions, give a detailed answer.
 - Use headings and bullet points when useful.
+- Do not give unnecessary information.
 """
 
     elif mode == "exam":
 
-        instruction = f"""
-You are an expert college exam preparation AI.
+        prompt = f"""
+You are an expert college exam preparation assistant.
 
-Answer:
-
+Subject and Question:
 {question}
 
-Rules:
+Instructions:
 - Give an accurate academic answer.
 - Use simple English.
-- Start with a definition when appropriate.
-- Make the answer suitable for writing in exams.
-- Use headings and bullet points.
-"""
-
-    elif mode == "placement":
-
-        instruction = f"""
-You are an expert placement preparation AI.
-
-User request:
-
-{question}
-
-Give:
-- Practical answers
-- Interview-focused preparation
-- Simple English
-- Important technical or HR questions when useful
-- Professional guidance
+- Make the answer suitable for exams.
+- Use definition, explanation and examples when needed.
+- Follow the requested marks format.
 """
 
     elif mode == "event":
 
-        instruction = f"""
-You are a professional college event planner.
+        prompt = f"""
+You are a professional college event and workshop planner.
 
-Create a detailed event plan based on:
+Create an event plan using the following information:
 
 {question}
 
 Include:
-1. Event Name
-2. Objective
-3. Event Overview
-4. Target Audience
-5. Schedule
-6. Required Resources
-7. Team Responsibilities
-8. Budget Suggestions
-9. Promotion Plan
-10. Registration Plan
-11. Certificates
-12. Feedback
-13. Conclusion
 
-Use simple and practical English.
+1. Event Name
+2. Event Objective
+3. Event Description
+4. Target Audience
+5. Event Schedule
+6. Venue Requirements
+7. Required Resources
+8. Team Responsibilities
+9. Budget Suggestions
+10. Promotion Plan
+11. Registration Process
+12. Certificates
+13. Feedback Process
+14. Conclusion
+
+Use practical and simple English.
+"""
+
+    elif mode == "placement":
+
+        prompt = f"""
+You are an expert placement and career preparation assistant.
+
+User Request:
+{question}
+
+Provide practical and professional guidance.
+
+When useful include:
+- Important concepts
+- Interview questions
+- Sample answers
+- Technical preparation
+- HR preparation
+- Career suggestions
+
+Use simple English.
 """
 
     else:
 
-        instruction = f"""
+        prompt = f"""
 You are Tech Mithra AI Pro.
 
 Answer this question accurately:
 
 {question}
 
-Use simple English and answer directly.
+Use simple English.
+Answer directly.
 """
 
-    try:
 
-        contents = [instruction]
+    # ========================================================
+    # TRY MULTIPLE MODELS
+    # ========================================================
 
-        if image is not None:
-            contents.append(image)
+    errors = []
 
-        response = client.models.generate_content(
-            model=TEXT_MODEL,
-            contents=contents,
-            config=types.GenerateContentConfig(
-                temperature=0.4,
-                max_output_tokens=1500
+    for model_name in TEXT_MODELS:
+
+        try:
+
+            contents = []
+
+            if image is not None:
+
+                contents.append(image)
+                contents.append(prompt)
+
+            else:
+
+                contents = prompt
+
+
+            response = client.models.generate_content(
+                model=model_name,
+                contents=contents
             )
-        )
 
-        if response and response.text:
-            return response.text.strip()
 
-        return "⚠️ AI could not generate an answer. Please try again."
+            if response:
 
-    except Exception as e:
+                response_text = getattr(
+                    response,
+                    "text",
+                    None
+                )
 
-        error_text = str(e).lower()
+                if response_text:
 
-        if "429" in error_text:
-            return "⚠️ Too many requests. Please wait a moment and try again."
+                    return response_text.strip()
 
-        if "api" in error_text and "key" in error_text:
-            return "❌ Invalid Gemini API Key."
 
-        if "404" in error_text:
-            return "❌ AI model not available. Check the model name."
+        except Exception as e:
 
-        if "503" in error_text:
-            return "⚠️ AI server is busy. Please try again."
+            error_message = str(e)
 
-        return f"⚠️ Error: {str(e)}"
+            errors.append(
+                f"{model_name}: {error_message}"
+            )
+
+            error_lower = error_message.lower()
+
+            # Invalid model - try next model
+            if (
+                "404" in error_lower
+                or "not found" in error_lower
+                or "model" in error_lower
+            ):
+                continue
+
+            # Server busy - wait and try next model
+            if (
+                "503" in error_lower
+                or "unavailable" in error_lower
+            ):
+                time.sleep(1)
+                continue
+
+            # Rate limit
+            if (
+                "429" in error_lower
+                or "quota" in error_lower
+            ):
+                return (
+                    "⚠️ AI request limit reached. "
+                    "Please wait a moment and try again."
+                )
+
+            # Invalid API key
+            if (
+                "api key" in error_lower
+                or "invalid key" in error_lower
+            ):
+                return (
+                    "❌ Invalid Gemini API Key. "
+                    "Please check Streamlit Secrets."
+                )
+
+            continue
+
+
+    return (
+        "⚠️ AI service is temporarily unavailable.\n\n"
+        "Please try again after a few seconds."
+    )
 
 
 # ============================================================
-# IMAGE PROMPT GENERATOR
+# GENERATE EVENT IMAGE PROMPT
 # ============================================================
 
-def generate_image_prompt(event_name, event_type, audience):
+def create_event_image_prompt(
+    event_name,
+    event_type,
+    target_audience
+):
 
     return f"""
-Create a professional, realistic and attractive college event promotional poster.
+Create a professional and realistic promotional poster.
 
 Event Name: {event_name}
 
 Event Type: {event_type}
 
-Target Audience: {audience}
+Target Audience: {target_audience}
 
-Requirements:
-- Modern design
-- Professional appearance
-- Attractive composition
-- Technology and education atmosphere
-- High quality
-- Social media poster style
-- Cinematic lighting
-- Clean composition
-- Space for event title and information
+Style:
+Modern college event poster,
+professional design,
+technology and education atmosphere,
+cinematic lighting,
+high quality,
+clean composition,
+attractive visual design,
+space for title and event details,
+social media promotional poster,
+realistic and premium appearance.
 """
 
 
 # ============================================================
-# TEXT TO IMAGE
+# TEXT TO IMAGE FUNCTION
 # ============================================================
 
 def generate_event_image(prompt):
@@ -241,7 +371,11 @@ def generate_event_image(prompt):
     api_key = get_api_key()
 
     if not api_key:
-        return None, "❌ Gemini API Key is missing."
+
+        return (
+            None,
+            "❌ Gemini API Key not found."
+        )
 
     try:
 
@@ -252,40 +386,127 @@ def generate_event_image(prompt):
             contents=prompt
         )
 
-        if response and response.candidates:
 
-            for candidate in response.candidates:
+        if not response:
 
-                if candidate.content and candidate.content.parts:
+            return (
+                None,
+                "⚠️ No image response received."
+            )
 
-                    for part in candidate.content.parts:
 
-                        if (
-                            hasattr(part, "inline_data")
-                            and part.inline_data
-                        ):
+        candidates = getattr(
+            response,
+            "candidates",
+            None
+        )
 
-                            image_bytes = part.inline_data.data
 
-                            generated_image = Image.open(
-                                io.BytesIO(image_bytes)
-                            )
+        if not candidates:
 
-                            return generated_image, None
+            return (
+                None,
+                "⚠️ Image could not be generated."
+            )
 
-        return None, "⚠️ Image could not be generated."
+
+        for candidate in candidates:
+
+            content = getattr(
+                candidate,
+                "content",
+                None
+            )
+
+            if not content:
+                continue
+
+
+            parts = getattr(
+                content,
+                "parts",
+                []
+            )
+
+
+            for part in parts:
+
+                inline_data = getattr(
+                    part,
+                    "inline_data",
+                    None
+                )
+
+
+                if inline_data:
+
+                    data = getattr(
+                        inline_data,
+                        "data",
+                        None
+                    )
+
+                    if data:
+
+                        generated_image = Image.open(
+                            io.BytesIO(data)
+                        )
+
+                        return (
+                            generated_image,
+                            None
+                        )
+
+
+        return (
+            None,
+            "⚠️ Image generation is currently unavailable."
+        )
+
 
     except Exception as e:
 
-        error_text = str(e).lower()
+        error_message = str(e)
+        error_lower = error_message.lower()
 
-        if "429" in error_text:
-            return None, "⚠️ Image generation limit reached."
 
-        if "404" in error_text:
-            return None, "⚠️ Image model is not available for this API."
+        if (
+            "429" in error_lower
+            or "quota" in error_lower
+        ):
 
-        return None, f"⚠️ Image generation error: {str(e)}"
+            return (
+                None,
+                "⚠️ Image generation limit reached. Please try later."
+            )
+
+
+        if (
+            "503" in error_lower
+            or "unavailable" in error_lower
+        ):
+
+            return (
+                None,
+                "⚠️ Image server is busy. Please try again later."
+            )
+
+
+        if (
+            "404" in error_lower
+            or "not found" in error_lower
+        ):
+
+            return (
+                None,
+                "⚠️ Image model is not available for this API."
+            )
+
+
+        return (
+            None,
+            "⚠️ Image generation failed. Please try again."
+        )
 
 
 # ============================================================
@@ -296,9 +517,12 @@ with st.sidebar:
 
     st.title(APP_NAME)
 
-    st.caption("Your Personal AI Study Assistant")
+    st.caption(
+        "AI Academic & Technical Assistant"
+    )
 
     st.divider()
+
 
     app_mode = st.radio(
         "Select Feature",
@@ -310,21 +534,46 @@ with st.sidebar:
         ]
     )
 
+
     st.divider()
 
-    if st.button("🗑️ Clear Chat"):
+
+    if st.button(
+        "🗑️ Clear Chat",
+        use_container_width=True
+    ):
+
         st.session_state.messages = []
+
         st.rerun()
 
 
+    st.divider()
+
+
+    api_key = get_api_key()
+
+    if api_key:
+
+        st.success(
+            "🟢 AI API Connected"
+        )
+
+    else:
+
+        st.warning(
+            "🟡 API Key Not Set"
+        )
+
+
 # ============================================================
-# HEADER
+# MAIN HEADER
 # ============================================================
 
 st.title(APP_NAME)
 
 st.caption(
-    "AI Academic Assistant | Projects | Events | Exams | Placements"
+    "AI Assistant | Projects | Labs | Events | Exams | Placements"
 )
 
 st.divider()
@@ -336,7 +585,14 @@ st.divider()
 
 if app_mode == "🤖 Project & Lab Guide":
 
-    st.header("🤖 Project & Lab Guide")
+    st.header(
+        "🤖 Project & Lab Guide"
+    )
+
+    st.caption(
+        "Ask any academic, technical or general question."
+    )
+
 
     tab1, tab2, tab3 = st.tabs(
         [
@@ -347,13 +603,21 @@ if app_mode == "🤖 Project & Lab Guide":
     )
 
 
+    # ========================================================
     # TEXT CHAT
+    # ========================================================
+
     with tab1:
 
         for message in st.session_state.messages:
 
-            with st.chat_message(message["role"]):
-                st.markdown(message["content"])
+            with st.chat_message(
+                message["role"]
+            ):
+
+                st.markdown(
+                    message["content"]
+                )
 
 
         user_question = st.chat_input(
@@ -363,6 +627,15 @@ if app_mode == "🤖 Project & Lab Guide":
 
         if user_question:
 
+            with st.chat_message(
+                "user"
+            ):
+
+                st.markdown(
+                    user_question
+                )
+
+
             st.session_state.messages.append(
                 {
                     "role": "user",
@@ -370,19 +643,25 @@ if app_mode == "🤖 Project & Lab Guide":
                 }
             )
 
-            with st.chat_message("user"):
-                st.markdown(user_question)
 
-            with st.chat_message("assistant"):
+            with st.chat_message(
+                "assistant"
+            ):
 
-                with st.spinner("Thinking..."):
+                with st.spinner(
+                    "Thinking..."
+                ):
 
                     answer = get_ai_response(
                         user_question,
                         mode="project"
                     )
 
-                st.markdown(answer)
+
+                st.markdown(
+                    answer
+                )
+
 
             st.session_state.messages.append(
                 {
@@ -392,40 +671,58 @@ if app_mode == "🤖 Project & Lab Guide":
             )
 
 
-    # IMAGE UPLOAD
+    # ========================================================
+    # UPLOAD PHOTO
+    # ========================================================
+
     with tab2:
 
         uploaded_photo = st.file_uploader(
-            "Upload Question Paper, Diagram, Circuit or Image",
-            type=["jpg", "jpeg", "png"]
+            "Upload Question, Diagram, Circuit or Lab Image",
+            type=[
+                "jpg",
+                "jpeg",
+                "png"
+            ]
         )
 
+
         photo_question = st.text_input(
-            "Ask a question about this image"
+            "Ask a question about the uploaded image"
         )
+
 
         if uploaded_photo:
 
-            image = Image.open(uploaded_photo)
+            image = Image.open(
+                uploaded_photo
+            )
 
             st.image(
                 image,
                 use_container_width=True
             )
 
+
             if st.button(
-                "🤖 Analyze Image",
-                key="analyze_upload"
+                "🤖 Analyze Uploaded Image",
+                use_container_width=True
             ):
 
                 if photo_question:
+
                     question = photo_question
+
                 else:
+
                     question = (
                         "Analyze this image and explain it clearly."
                     )
 
-                with st.spinner("Analyzing..."):
+
+                with st.spinner(
+                    "Analyzing image..."
+                ):
 
                     answer = get_ai_response(
                         question,
@@ -433,41 +730,64 @@ if app_mode == "🤖 Project & Lab Guide":
                         image=image
                     )
 
-                st.markdown("### 🤖 AI Answer")
-                st.markdown(answer)
+
+                st.subheader(
+                    "🤖 AI Answer"
+                )
+
+                st.markdown(
+                    answer
+                )
 
 
-    # CAMERA
+    # ========================================================
+    # CAMERA PHOTO
+    # ========================================================
+
     with tab3:
 
         camera_photo = st.camera_input(
             "Take a Photo"
         )
 
+
         camera_question = st.text_input(
-            "Ask a question",
+            "Ask a question about the camera photo",
             key="camera_question"
         )
 
+
         if camera_photo:
 
-            image = Image.open(camera_photo)
+            image = Image.open(
+                camera_photo
+            )
 
             st.image(
                 image,
                 use_container_width=True
             )
 
+
             if st.button(
-                "🤖 Analyze Camera Photo"
+                "🤖 Analyze Camera Photo",
+                use_container_width=True
             ):
 
                 if camera_question:
-                    question = camera_question
-                else:
-                    question = "Analyze this image."
 
-                with st.spinner("Analyzing..."):
+                    question = camera_question
+
+                else:
+
+                    question = (
+                        "Analyze this image and explain it clearly."
+                    )
+
+
+                with st.spinner(
+                    "Analyzing image..."
+                ):
 
                     answer = get_ai_response(
                         question,
@@ -475,8 +795,14 @@ if app_mode == "🤖 Project & Lab Guide":
                         image=image
                     )
 
-                st.markdown("### 🤖 AI Answer")
-                st.markdown(answer)
+
+                st.subheader(
+                    "🤖 AI Answer"
+                )
+
+                st.markdown(
+                    answer
+                )
 
 
 # ============================================================
@@ -485,50 +811,69 @@ if app_mode == "🤖 Project & Lab Guide":
 
 elif app_mode == "🎪 Event Planner":
 
-    st.header("🎪 AI Event & Workshop Planner")
+    st.header(
+        "🎪 AI Event & Workshop Planner"
+    )
+
+    st.caption(
+        "Create event plans, image prompts and promotional images."
+    )
+
 
     event_name = st.text_input(
         "Event Name",
         placeholder="Example: PLC Workshop"
     )
 
+
     event_type = st.selectbox(
         "Event Type",
         [
             "Technical Workshop",
             "Seminar",
-            "College Fest",
             "Guest Lecture",
             "Hackathon",
             "Project Expo",
+            "College Fest",
             "Cultural Event",
             "Sports Event"
         ]
     )
 
+
     target_audience = st.text_input(
         "Target Audience",
-        placeholder="Example: Engineering Students"
+        placeholder="Example: Final Year EEE Students"
     )
+
 
     col1, col2 = st.columns(2)
 
 
+    # EVENT PLAN
     with col1:
 
-        if st.button("📋 Generate Event Plan"):
+        if st.button(
+            "📋 Generate Event Plan",
+            use_container_width=True
+        ):
 
-            if not event_name:
+            if not event_name.strip():
 
-                st.warning("Please enter an Event Name.")
+                st.warning(
+                    "Please enter Event Name."
+                )
 
             else:
 
                 request = f"""
 Event Name: {event_name}
+
 Event Type: {event_type}
+
 Target Audience: {target_audience}
 """
+
 
                 with st.spinner(
                     "Creating Event Plan..."
@@ -539,50 +884,92 @@ Target Audience: {target_audience}
                         mode="event"
                     )
 
-                st.markdown("## 📋 Event Plan")
-                st.markdown(answer)
+
+                st.subheader(
+                    "📋 Generated Event Plan"
+                )
+
+                st.markdown(
+                    answer
+                )
 
 
+    # IMAGE PROMPT
     with col2:
 
-        if st.button("📝 Generate Image Prompt"):
+        if st.button(
+            "📝 Generate Image Prompt",
+            use_container_width=True
+        ):
 
-            prompt = generate_image_prompt(
-                event_name,
-                event_type,
-                target_audience
+            generated_prompt = (
+                create_event_image_prompt(
+                    event_name or "College Event",
+                    event_type,
+                    target_audience or "College Students"
+                )
             )
 
-            st.markdown("## 🖼️ Image Prompt")
 
-            st.code(prompt)
+            st.subheader(
+                "🖼️ Event Image Prompt"
+            )
+
+            st.code(
+                generated_prompt,
+                language=None
+            )
 
 
     st.divider()
 
-    st.subheader("🎨 Text to Image")
 
-    image_prompt = st.text_area(
-        "Enter Image Prompt",
-        value=generate_image_prompt(
+    # ========================================================
+    # TEXT TO IMAGE
+    # ========================================================
+
+    st.subheader(
+        "🎨 Event Text to Image"
+    )
+
+
+    default_prompt = (
+        create_event_image_prompt(
             event_name or "College Event",
             event_type,
             target_audience or "Students"
-        ),
-        height=180
+        )
     )
 
-    if st.button("🎨 Generate Image"):
 
-        with st.spinner("Generating Image..."):
+    image_prompt = st.text_area(
+        "Image Prompt",
+        value=default_prompt,
+        height=220
+    )
 
-            generated_image, error = generate_event_image(
-                image_prompt
+
+    if st.button(
+        "🎨 Generate Event Image",
+        use_container_width=True
+    ):
+
+        with st.spinner(
+            "Generating image..."
+        ):
+
+            generated_image, error = (
+                generate_event_image(
+                    image_prompt
+                )
             )
+
 
         if error:
 
-            st.error(error)
+            st.error(
+                error
+            )
 
         else:
 
@@ -602,47 +989,62 @@ Target Audience: {target_audience}
 
 elif app_mode == "📚 Exam Hacker":
 
-    st.header("📚 AI Exam Preparation")
+    st.header(
+        "📚 AI Exam Preparation"
+    )
+
 
     subject_name = st.text_input(
-        "Subject Name"
+        "Subject Name",
+        placeholder="Example: Fundamentals of Management"
     )
+
 
     topic_name = st.text_input(
-        "Topic / Question"
+        "Topic / Chapter / Question",
+        placeholder="Example: Levels of Management"
     )
 
+
     answer_type = st.selectbox(
-        "Answer Type",
+        "Select Answer Type",
         [
             "2 Marks Answer",
             "5 Marks Answer",
             "10 Marks Answer",
             "Long Answer",
-            "Important Questions",
-            "Short Notes"
+            "Short Notes",
+            "Important Questions"
         ]
     )
 
-    if st.button("📝 Generate Answer"):
 
-        if not topic_name:
+    if st.button(
+        "📝 Generate Answer",
+        use_container_width=True
+    ):
+
+        if not topic_name.strip():
 
             st.warning(
-                "Please enter a Question or Topic."
+                "Please enter a Topic or Question."
             )
 
         else:
 
             request = f"""
-Subject: {subject_name}
+Subject Name:
+{subject_name}
 
-Question:
+Topic / Question:
 {topic_name}
 
 Required Answer Type:
 {answer_type}
+
+Give the answer according to the required marks.
 """
+
 
             with st.spinner(
                 "Preparing Answer..."
@@ -653,23 +1055,32 @@ Required Answer Type:
                     mode="exam"
                 )
 
-            st.markdown("## 📝 Exam Answer")
 
-            st.markdown(answer)
+            st.subheader(
+                "📝 Generated Answer"
+            )
+
+            st.markdown(
+                answer
+            )
 
 
 # ============================================================
-# PLACEMENT PREP
+# PLACEMENT PREPARATION
 # ============================================================
 
 elif app_mode == "💼 Placement Prep":
 
-    st.header("💼 AI Placement Preparation")
+    st.header(
+        "💼 AI Placement Preparation"
+    )
+
 
     role_name = st.text_input(
         "Target Job Role / Technology",
         placeholder="Example: Electrical Engineer"
     )
+
 
     preparation_type = st.selectbox(
         "Preparation Type",
@@ -683,28 +1094,31 @@ elif app_mode == "💼 Placement Prep":
         ]
     )
 
+
     if st.button(
-        "🎯 Generate Placement Guide"
+        "🎯 Generate Placement Guide",
+        use_container_width=True
     ):
 
-        if not role_name:
+        if not role_name.strip():
 
             st.warning(
-                "Please enter Target Job Role."
+                "Please enter your Target Job Role."
             )
 
         else:
 
             request = f"""
-Target Role:
+Target Job Role:
 {role_name}
 
 Preparation Type:
 {preparation_type}
 """
 
+
             with st.spinner(
-                "Preparing Placement Guide..."
+                "Preparing your Placement Guide..."
             ):
 
                 answer = get_ai_response(
@@ -712,11 +1126,14 @@ Preparation Type:
                     mode="placement"
                 )
 
-            st.markdown(
-                "## 🎯 Placement Guide"
+
+            st.subheader(
+                "🎯 Placement Guide"
             )
 
-            st.markdown(answer)
+            st.markdown(
+                answer
+            )
 
 
 # ============================================================
@@ -727,9 +1144,15 @@ st.divider()
 
 st.markdown(
     """
-    <div style="text-align:center; opacity:0.7;">
-        🚀 <b>Tech Mithra AI Pro</b><br>
-        AI Academic Assistant | Study | Projects | Events | Placements
+    <div style="text-align:center; padding:20px;">
+        <h3>🚀 Tech Mithra AI Pro</h3>
+        <p>
+            AI Academic Assistant |
+            Project Guide |
+            Event Planner |
+            Exam Preparation |
+            Placement Preparation
+        </p>
     </div>
     """,
     unsafe_allow_html=True
