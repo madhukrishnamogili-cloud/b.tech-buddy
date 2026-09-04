@@ -1,11 +1,14 @@
 # ============================================================
 # TECH MITHRA AI PRO - COMPLETE app.py
+# NO STREAM SELECT | FAST AI ANSWERS
 #
-# Install requirements:
-# pip install streamlit google-genai pillow
+# requirements.txt:
+# streamlit
+# google-genai
+# Pillow
 #
 # Streamlit Secrets:
-# GEMINI_API_KEY = "YOUR_GOOGLE_GEMINI_API_KEY"
+# GEMINI_API_KEY = "YOUR_GEMINI_API_KEY"
 #
 # Run:
 # streamlit run app.py
@@ -13,9 +16,8 @@
 
 import streamlit as st
 from google import genai
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image
 import io
-import time
 import textwrap
 
 
@@ -36,21 +38,29 @@ st.set_page_config(
 
 APP_NAME = "🚀 Tech Mithra AI Pro"
 
-STREAMS = [
-    "⚡ Engineering (B.Tech / EEE / CSE)",
-    "💊 Pharmacy (B.Pharm / Pharm.D)",
-    "🩺 Nursing (B.Sc / GNM)",
-    "📈 MBA (Management)"
-]
-
+# Fast models
 MODELS = [
-    "gemini-2.5-flash",
-    "gemini-2.5-flash-lite"
+    "gemini-2.5-flash-lite",
+    "gemini-2.5-flash"
 ]
 
 
 # ============================================================
-# GET API KEY
+# SESSION STATE
+# ============================================================
+
+if "logged_in" not in st.session_state:
+    st.session_state.logged_in = False
+
+if "user_email" not in st.session_state:
+    st.session_state.user_email = ""
+
+if "messages" not in st.session_state:
+    st.session_state.messages = []
+
+
+# ============================================================
+# API KEY
 # ============================================================
 
 def get_api_key():
@@ -61,7 +71,7 @@ def get_api_key():
 
 
 # ============================================================
-# CREATE GEMINI CLIENT
+# GEMINI CLIENT
 # ============================================================
 
 @st.cache_resource
@@ -76,11 +86,10 @@ def get_client(api_key):
 
 
 # ============================================================
-# AI RESPONSE FUNCTION
-# FAST RESPONSE + MODEL FALLBACK
+# FAST AI FUNCTION
 # ============================================================
 
-def ask_ai(prompt, system_instruction="", image=None):
+def ask_ai(question, instruction="", image=None):
 
     api_key = get_api_key()
 
@@ -92,24 +101,26 @@ def ask_ai(prompt, system_instruction="", image=None):
     if client is None:
         return None
 
-    final_prompt = f"""
-{system_instruction}
+    prompt = f"""
+{instruction}
 
-User Question:
-{prompt}
+User question:
+{question}
 
-Give a clear and useful answer.
-Use simple English.
-Do not mention API errors.
+IMPORTANT:
+- Answer directly.
+- If the question is short, give a short answer.
+- Do not unnecessarily give a very long answer.
+- Use simple and clear English.
+- Give accurate information.
 """
 
+    contents = prompt
+
     if image is not None:
-        contents = [final_prompt, image]
-    else:
-        contents = final_prompt
+        contents = [prompt, image]
 
     for model_name in MODELS:
-
         try:
             response = client.models.generate_content(
                 model=model_name,
@@ -126,553 +137,224 @@ Do not mention API errors.
 
 
 # ============================================================
-# LOCAL FALLBACK ANSWER
+# LOCAL FAST FALLBACK
 # ============================================================
 
-def local_answer(question, stream_name):
+def local_answer(question):
 
-    question_lower = question.lower().strip()
+    q = question.lower().strip()
 
-    definitions = {
+    if q in ["hi", "hello", "hey"]:
+        return "Hello! 👋 How can I help you?"
 
-        "what is python": """
-### Python
+    if "what is ev" in q or "what is electric vehicle" in q:
+        return """
+### 🚗 What is an EV?
 
-Python is a high-level and easy-to-learn programming language.
+EV stands for **Electric Vehicle**.
 
-#### Important Points:
-- Python has simple syntax.
-- It is easy for beginners.
-- It is used for web development.
-- It is used in Artificial Intelligence.
-- It is used for data science.
-- It is used for automation.
+An Electric Vehicle uses an electric motor and battery power instead of a petrol or diesel engine.
 
-#### Applications:
-Python is used in AI, machine learning, web applications, software development and data analysis.
-""",
+**Examples:** Electric cars, bikes and buses.
+"""
 
-        "what is iot": """
-### Internet of Things (IoT)
+    if "what is python" in q:
+        return """
+### 🐍 What is Python?
+
+Python is a high-level, easy-to-learn programming language.
+
+It is used for:
+- AI
+- Web development
+- Data science
+- Automation
+"""
+
+    if "what is iot" in q:
+        return """
+### 🌐 What is IoT?
 
 IoT stands for **Internet of Things**.
 
-It is a system in which physical devices are connected to the internet to collect, exchange and process data.
+It connects physical devices to the internet so they can collect and exchange data.
 
-#### Examples:
-- Smart homes
-- Smart watches
-- Smart agriculture
-- Smart vehicles
-- Industrial automation
-
-#### Conclusion:
-IoT helps devices communicate with each other through the internet and improves automation.
-""",
-
-        "what is ethics": """
-### Ethics
-
-Ethics refers to the moral principles that guide human behaviour.
-
-It helps people understand what is right and wrong.
-
-#### Importance of Ethics:
-- Promotes honesty
-- Builds trust
-- Encourages responsibility
-- Improves professional behaviour
-- Helps in decision making
-
-#### Conclusion:
-Ethics is important for maintaining responsible and respectful behaviour in personal and professional life.
-""",
-
-        "what is ev": """
-### Electric Vehicle (EV)
-
-An Electric Vehicle is a vehicle that uses an electric motor for propulsion.
-
-Instead of depending completely on petrol or diesel, an EV uses electrical energy stored in batteries.
-
-#### Main Components:
-- Battery
-- Electric motor
-- Motor controller
-- Charger
-- Battery Management System
-
-#### Advantages:
-- Low pollution
-- Low running cost
-- High efficiency
-- Quiet operation
-
-#### Conclusion:
-Electric Vehicles are an important technology for sustainable transportation.
+**Examples:** Smart homes, smart watches and smart agriculture.
 """
-    }
 
-    for key, value in definitions.items():
-        if key in question_lower:
-            return value
+    if "what is ethics" in q:
+        return """
+### What is Ethics?
+
+Ethics refers to moral principles that guide a person's behaviour and decisions.
+
+It helps us understand what is right and wrong.
+"""
 
     return f"""
-### Answer: {question}
+### Answer
 
-**Definition:**  
-{question} is an important topic related to the {stream_name} field.
+**{question}** is an important topic.
 
-### Important Points
-
-1. Understand the basic definition and purpose of the topic.
-2. Study its important components and working principle.
-3. Learn the practical applications.
-4. Understand its advantages and limitations.
-5. Use examples for better understanding.
-
-### Applications
-
-This topic can be useful in education, industry, research, technology and professional applications.
-
-### Conclusion
-
-For exam preparation, understand the definition, working principle, important components and practical applications of **{question}**.
+Please check your Gemini API key and internet connection for a complete AI-generated answer.
 """
 
 
 # ============================================================
-# PROJECT AND LAB GUIDE ANSWER
+# MAIN CHAT ANSWER
 # ============================================================
 
-def project_answer(stream_name, question, image=None):
-
-    instruction = f"""
-You are Tech Mithra AI Pro.
-
-You are an expert academic assistant for {stream_name} students.
-
-Answer accurately and clearly.
-
-If the question is small:
-Give a direct answer quickly.
-
-If the question is for exams:
-Use:
-1. Definition
-2. Explanation
-3. Important Points
-4. Applications
-5. Conclusion
-
-If an image is provided:
-Analyze the image and answer the student's question based on the visible content.
-
-Use simple English suitable for college students.
-"""
-
-    result = ask_ai(
-        prompt=question,
-        system_instruction=instruction,
-        image=image
-    )
-
-    if result:
-        return result
-
-    return local_answer(question, stream_name)
-
-
-# ============================================================
-# EXAM ANSWER
-# ============================================================
-
-def exam_answer(subject, topic, answer_type):
-
-    prompt = f"""
-Subject: {subject}
-Topic: {topic}
-Required Answer Type: {answer_type}
-
-Prepare an exam-ready academic answer.
-"""
+def get_answer(question, image=None):
 
     instruction = """
-You are an expert university exam preparation assistant.
+You are Tech Mithra AI Pro, a helpful AI assistant like ChatGPT.
 
-Write an accurate answer.
+Answer any general, academic, technical, educational or career question.
 
-For 2 Marks:
-Give a short definition and key point.
+For small questions:
+Give a fast and concise answer.
 
-For 5 Marks:
-Give definition, explanation and important points.
+For questions asking for explanation:
+Give a clear explanation with headings and bullet points.
 
-For 10 Marks:
-Give detailed explanation, headings, applications and conclusion.
+For exam questions:
+Give definition, explanation, key points and conclusion.
 
-Use simple English.
+Be friendly, accurate and easy to understand.
 """
 
-    result = ask_ai(
-        prompt=prompt,
-        system_instruction=instruction
+    answer = ask_ai(
+        question,
+        instruction,
+        image
     )
 
-    if result:
-        return result
+    if answer:
+        return answer
 
-    if answer_type == "2 Marks Answer":
-        return f"""
-### {topic}
-
-**Definition:**  
-{topic} is an important concept in the subject **{subject}**.
-
-It is studied to understand its basic principles, functions and applications.
-"""
-
-    elif answer_type == "5 Marks Answer":
-        return f"""
-## {topic}
-
-### Definition
-{topic} is an important concept in **{subject}**.
-
-### Explanation
-It involves important principles, functions and practical applications.
-
-### Important Points
-1. Basic concept and purpose.
-2. Main components or elements.
-3. Working principle.
-4. Advantages.
-5. Applications.
-
-### Conclusion
-Understanding {topic} helps students apply theoretical knowledge in practical situations.
-"""
-
-    else:
-        return f"""
-# {topic}
-
-## Introduction
-{topic} is an important topic in **{subject}**.
-
-## Definition
-It refers to the principles and methods associated with the topic.
-
-## Detailed Explanation
-The topic includes fundamental concepts, important components, working methods and practical applications.
-
-## Important Points
-1. Basic principles.
-2. Components.
-3. Working procedure.
-4. Advantages.
-5. Limitations.
-6. Applications.
-
-## Applications
-The concept is useful in education, research, industry and professional applications.
-
-## Conclusion
-A proper understanding of {topic} helps students develop theoretical and practical knowledge.
-"""
+    return local_answer(question)
 
 
 # ============================================================
 # EVENT PLANNER
 # ============================================================
 
-def local_event_plan(event_name, event_type, audience):
-
-    return f"""
-# 📋 Event Plan: {event_name}
-
-## 🎯 Event Type
-{event_type}
-
-## 👥 Target Audience
-{audience}
-
-## 🎯 Objective
-To provide knowledge, practical exposure and interactive learning opportunities for participants.
-
-## 🕘 Suggested Schedule
-
-### 9:00 AM – Registration
-Participant registration and welcome.
-
-### 9:30 AM – Inauguration
-Welcome speech and introduction.
-
-### 10:00 AM – Technical Session
-Introduction to the main event topic.
-
-### 11:30 AM – Break
-
-### 12:00 PM – Practical Session
-Hands-on learning and demonstration.
-
-### 1:30 PM – Lunch Break
-
-### 2:30 PM – Interactive Session
-Student activities, questions and discussion.
-
-### 4:00 PM – Feedback
-Collect participant feedback.
-
-### 4:30 PM – Certificate Distribution
-
-## 📌 Requirements
-- Venue
-- Projector
-- Internet connection
-- Registration desk
-- Faculty coordinators
-- Student volunteers
-- Certificates
-
-## 📢 Promotion
-Promote the event using:
-- College WhatsApp groups
-- Posters
-- Social media
-- Department announcements
-
-## 🏁 Conclusion
-The event will help participants improve practical knowledge, communication and technical skills.
-"""
-
-
 def generate_event_plan(event_name, event_type, audience):
 
     prompt = f"""
+Create a complete and practical event plan.
+
 Event Name: {event_name}
 Event Type: {event_type}
 Target Audience: {audience}
-
-Create a complete college event plan.
 """
 
     instruction = """
 You are an expert college event planner.
 
-Create a practical event plan.
+Create a clear event plan including:
 
-Include:
-- Event objective
-- Target audience
-- Detailed schedule
-- Required resources
-- Team responsibilities
-- Budget categories
-- Promotion plan
-- Certificate plan
-- Feedback process
+1. Event Objective
+2. Event Description
+3. Target Audience
+4. Required Resources
+5. Team Responsibilities
+6. Complete Event Schedule
+7. Budget Categories
+8. Promotion Plan
+9. Expected Outcomes
 
-Use clear headings and bullet points.
+Keep it practical.
 """
 
-    result = ask_ai(
-        prompt=prompt,
-        system_instruction=instruction
+    answer = ask_ai(
+        prompt,
+        instruction
     )
 
-    if result:
-        return result
-
-    return local_event_plan(event_name, event_type, audience)
-
-
-# ============================================================
-# EVENT IMAGE PROMPT
-# ============================================================
-
-def local_event_image_prompt(event_name, event_type, audience):
+    if answer:
+        return answer
 
     return f"""
-Create a professional and modern college event poster for "{event_name}".
+# 📋 Event Plan: {event_name}
 
-Event Type: {event_type}
-Target Audience: {audience}
+## Event Type
+{event_type}
 
-Design style:
-Modern educational technology poster, professional college atmosphere,
-students participating in a technical event, clean typography space,
-cinematic lighting, realistic details, high quality,
-professional event branding, 4K quality,
-vertical poster composition.
+## Target Audience
+{audience}
+
+## Objective
+To provide knowledge, learning and practical exposure to participants.
+
+## Suggested Schedule
+
+- 09:00 AM – Registration
+- 09:30 AM – Inauguration
+- 10:00 AM – Main Session
+- 11:30 AM – Break
+- 12:00 PM – Practical Session
+- 01:30 PM – Lunch
+- 02:30 PM – Interactive Session
+- 04:00 PM – Feedback
+- 04:30 PM – Certificate Distribution
+
+## Requirements
+- Venue
+- Projector
+- Laptop
+- Internet
+- Volunteers
+- Registration Desk
+- Certificates
+
+## Promotion
+- WhatsApp
+- Instagram
+- College Notice Board
+- Classroom Announcements
 """
 
 
 # ============================================================
-# CREATE LOCAL EVENT POSTER
+# IMAGE PROMPT
 # ============================================================
 
-def create_event_poster(event_name, event_type, audience):
-
-    width = 1080
-    height = 1350
-
-    image = Image.new("RGB", (width, height), (25, 35, 55))
-
-    draw = ImageDraw.Draw(image)
-
-    try:
-        title_font = ImageFont.truetype("DejaVuSans-Bold.ttf", 70)
-        sub_font = ImageFont.truetype("DejaVuSans.ttf", 38)
-        small_font = ImageFont.truetype("DejaVuSans.ttf", 30)
-    except Exception:
-        title_font = ImageFont.load_default()
-        sub_font = ImageFont.load_default()
-        small_font = ImageFont.load_default()
-
-    draw.rectangle(
-        [(0, 0), (width, 250)],
-        fill=(35, 75, 140)
-    )
-
-    draw.text(
-        (70, 70),
-        "TECH MITHRA EVENT",
-        font=small_font,
-        fill="white"
-    )
-
-    wrapped_title = textwrap.fill(event_name.upper(), width=20)
-
-    draw.multiline_text(
-        (70, 320),
-        wrapped_title,
-        font=title_font,
-        fill="white",
-        spacing=15
-    )
-
-    draw.text(
-        (70, 750),
-        f"EVENT TYPE: {event_type}",
-        font=sub_font,
-        fill=(180, 220, 255)
-    )
-
-    draw.text(
-        (70, 850),
-        "TARGET AUDIENCE:",
-        font=small_font,
-        fill=(255, 210, 120)
-    )
-
-    audience_text = textwrap.fill(audience, width=40)
-
-    draw.multiline_text(
-        (70, 900),
-        audience_text,
-        font=sub_font,
-        fill="white",
-        spacing=10
-    )
-
-    draw.text(
-        (70, 1180),
-        "LEARN • CONNECT • INNOVATE",
-        font=small_font,
-        fill=(120, 230, 180)
-    )
-
-    buffer = io.BytesIO()
-
-    image.save(
-        buffer,
-        format="PNG"
-    )
-
-    buffer.seek(0)
-
-    return buffer
-
-
-# ============================================================
-# PLACEMENT PREP
-# ============================================================
-
-def placement_answer(role):
+def generate_image_prompt(event_name, event_type, audience):
 
     prompt = f"""
-Target Job Role or Technology: {role}
+Create one detailed AI image generation prompt for a college event poster.
 
-Create a placement preparation guide.
+Event Name: {event_name}
+Event Type: {event_type}
+Audience: {audience}
 """
 
     instruction = """
-You are an expert placement preparation mentor.
+You are an expert AI image prompt writer.
 
-Create a practical placement roadmap.
-
-Include:
-1. Required technical skills
-2. Important concepts
-3. Interview questions
-4. HR questions
-5. Resume tips
-6. Preparation roadmap
-
-Use simple English.
+Generate only one professional and detailed image prompt.
 """
 
-    result = ask_ai(
-        prompt=prompt,
-        system_instruction=instruction
+    answer = ask_ai(
+        prompt,
+        instruction
     )
 
-    if result:
-        return result
+    if answer:
+        return answer
 
     return f"""
-# 🎯 Placement Preparation: {role}
-
-## Required Skills
-- Basic technical knowledge
-- Problem solving
-- Communication
-- Teamwork
-- Project knowledge
-
-## Important Interview Questions
-1. Tell me about yourself.
-2. Explain your project.
-3. What are your strengths?
-4. What technical skills do you have?
-5. Why should we hire you?
-
-## Preparation Plan
-- Study fundamentals.
-- Practice interview questions.
-- Improve communication.
-- Prepare projects.
-- Create a professional resume.
+Create a professional modern college event poster for "{event_name}",
+event type "{event_type}", target audience "{audience}",
+modern academic atmosphere, students, technology theme,
+professional typography space, cinematic lighting,
+high quality, realistic, 4K, vertical poster design.
 """
 
 
 # ============================================================
-# LOGIN INITIALIZATION
-# ============================================================
-
-if "logged_in" not in st.session_state:
-    st.session_state.logged_in = False
-
-if "user_email" not in st.session_state:
-    st.session_state.user_email = ""
-
-if "messages" not in st.session_state:
-    st.session_state.messages = []
-
-
-# ============================================================
-# RESTORE LOGIN FROM URL
+# LOGIN
 # ============================================================
 
 try:
@@ -686,10 +368,6 @@ except Exception:
     pass
 
 
-# ============================================================
-# LOGIN PAGE
-# ============================================================
-
 if not st.session_state.logged_in:
 
     st.title("🚀 Tech Mithra AI Pro")
@@ -700,9 +378,7 @@ if not st.session_state.logged_in:
 
     with col2:
 
-        email = st.text_input(
-            "📧 Email Address"
-        )
+        email = st.text_input("📧 Email Address")
 
         password = st.text_input(
             "🔑 Password",
@@ -717,16 +393,20 @@ if not st.session_state.logged_in:
             if email.strip() and password.strip():
 
                 st.session_state.logged_in = True
+
                 st.session_state.user_email = email.strip()
 
-                st.query_params["user"] = email.strip()
+                try:
+                    st.query_params["user"] = email.strip()
+                except Exception:
+                    pass
 
                 st.rerun()
 
             else:
 
                 st.error(
-                    "Please enter email and password."
+                    "Please enter Email and Password."
                 )
 
     st.stop()
@@ -740,15 +420,8 @@ with st.sidebar:
 
     st.title(APP_NAME)
 
-    st.success(
-        f"Logged in as: {st.session_state.user_email}"
-    )
-
-    st.divider()
-
-    education_stream = st.selectbox(
-        "📚 Select Stream",
-        STREAMS
+    st.caption(
+        f"Logged in: {st.session_state.user_email}"
     )
 
     st.divider()
@@ -756,7 +429,7 @@ with st.sidebar:
     app_mode = st.radio(
         "Select Feature",
         [
-            "🤖 Project & Lab Guide",
+            "🤖 AI Chat",
             "🎪 Event Planner",
             "📚 Exam Preparation",
             "💼 Placement Prep"
@@ -783,73 +456,77 @@ with st.sidebar:
 
 
 # ============================================================
-# PROJECT & LAB GUIDE
+# AI CHAT
 # ============================================================
 
-if app_mode == "🤖 Project & Lab Guide":
+if app_mode == "🤖 AI Chat":
 
-    st.title("🤖 Project & Lab Guide")
+    st.title("🤖 Tech Mithra AI")
 
     st.caption(
-        "Ask any academic, technical or general question."
+        "Ask any question and get a fast answer."
     )
 
     tab1, tab2, tab3 = st.tabs(
         [
-            "💬 Text Chat",
+            "💬 Ask Question",
             "🖼️ Upload Photo",
-            "📸 Camera Photo"
+            "📸 Camera"
         ]
     )
 
-    uploaded_image = None
-    user_question = ""
+    question = ""
+    selected_image = None
 
     with tab1:
 
-        user_question = st.text_input(
-            "Ask your question",
-            placeholder="Example: What is IoT?"
+        question = st.text_input(
+            "Ask anything",
+            placeholder="Example: What is an Electric Vehicle?"
         )
 
     with tab2:
 
         uploaded_file = st.file_uploader(
-            "Upload an image",
+            "Upload Image",
             type=["jpg", "jpeg", "png"]
         )
 
         if uploaded_file:
 
-            uploaded_image = Image.open(uploaded_file)
+            selected_image = Image.open(
+                uploaded_file
+            )
 
             st.image(
-                uploaded_image,
+                selected_image,
                 width=350
             )
 
-            user_question = st.text_input(
-                "Ask question about this image",
+            question = st.text_input(
+                "Ask about this image",
                 key="upload_question"
             )
 
     with tab3:
 
         camera_file = st.camera_input(
-            "Take a photo"
+            "Take a Photo"
         )
 
         if camera_file:
 
-            uploaded_image = Image.open(camera_file)
+            selected_image = Image.open(
+                camera_file
+            )
 
             st.image(
-                uploaded_image,
+                selected_image,
                 width=350
             )
 
-            user_question = st.text_input(
-                "Ask question about this photo",
+            question = st.text_input(
+                "Ask about this photo",
                 key="camera_question"
             )
 
@@ -857,7 +534,9 @@ if app_mode == "🤖 Project & Lab Guide":
 
     for message in st.session_state.messages:
 
-        with st.chat_message(message["role"]):
+        with st.chat_message(
+            message["role"]
+        ):
 
             st.markdown(
                 message["content"]
@@ -868,29 +547,28 @@ if app_mode == "🤖 Project & Lab Guide":
         use_container_width=True
     ):
 
-        if user_question.strip():
+        if question.strip():
 
             st.session_state.messages.append(
                 {
                     "role": "user",
-                    "content": user_question
+                    "content": question
                 }
             )
 
             with st.chat_message("user"):
 
-                st.markdown(user_question)
+                st.markdown(question)
 
             with st.chat_message("assistant"):
 
                 with st.spinner(
-                    "Preparing answer..."
+                    "Thinking..."
                 ):
 
-                    answer = project_answer(
-                        education_stream,
-                        user_question,
-                        uploaded_image
+                    answer = get_answer(
+                        question,
+                        selected_image
                     )
 
                     st.markdown(answer)
@@ -923,13 +601,9 @@ elif app_mode == "🎪 Event Planner":
 
     st.title("🎪 Event Planner")
 
-    st.caption(
-        "Generate event plans, image prompts and event posters."
-    )
-
     event_name = st.text_input(
         "Event Name",
-        placeholder="Example: PLC Technical Workshop"
+        placeholder="Example: PLC Workshop"
     )
 
     event_type = st.selectbox(
@@ -939,19 +613,18 @@ elif app_mode == "🎪 Event Planner":
             "Seminar",
             "Guest Lecture",
             "Hackathon",
-            "Cultural Event",
             "College Fest",
-            "Project Exhibition",
-            "Awareness Program"
+            "Cultural Event",
+            "Project Exhibition"
         ]
     )
 
-    target_audience = st.text_input(
+    audience = st.text_input(
         "Target Audience",
-        placeholder="Example: Final Year EEE Students"
+        placeholder="Example: Engineering Students"
     )
 
-    col1, col2, col3 = st.columns(3)
+    col1, col2 = st.columns(2)
 
     with col1:
 
@@ -967,119 +640,48 @@ elif app_mode == "🎪 Event Planner":
             use_container_width=True
         )
 
-    with col3:
-
-        generate_poster = st.button(
-            "🖼️ Generate Event Poster",
-            use_container_width=True
-        )
-
     if generate_plan:
 
         if event_name.strip():
 
             with st.spinner(
-                "Generating event plan..."
+                "Creating event plan..."
             ):
 
-                plan = generate_event_plan(
+                result = generate_event_plan(
                     event_name,
                     event_type,
-                    target_audience
+                    audience
                 )
 
-            st.markdown(plan)
+            st.markdown(result)
 
         else:
 
             st.warning(
-                "Please enter Event Name."
+                "Please enter an event name."
             )
 
     if generate_prompt:
 
         if event_name.strip():
 
-            prompt = f"""
-Create a professional event poster image.
+            with st.spinner(
+                "Creating image prompt..."
+            ):
 
-Event Name: {event_name}
-Event Type: {event_type}
-Target Audience: {target_audience}
-
-Style:
-Modern, professional, realistic,
-college event atmosphere,
-high quality,
-cinematic lighting,
-clean composition,
-space for event information,
-4K quality,
-vertical poster.
-"""
-
-            ai_prompt = ask_ai(
-                prompt=prompt,
-                system_instruction="""
-You are an expert AI image prompt engineer.
-
-Create one detailed professional image generation prompt.
-Only give the final prompt.
-"""
-            )
-
-            if not ai_prompt:
-                ai_prompt = local_event_image_prompt(
+                result = generate_image_prompt(
                     event_name,
                     event_type,
-                    target_audience
+                    audience
                 )
 
-            st.subheader(
-                "🎨 AI Image Generation Prompt"
-            )
-
-            st.code(
-                ai_prompt,
-                language=None
-            )
+            st.code(result)
 
         else:
 
             st.warning(
-                "Please enter Event Name."
-            )
-
-    if generate_poster:
-
-        if event_name.strip():
-
-            poster = create_event_poster(
-                event_name,
-                event_type,
-                target_audience
-            )
-
-            st.subheader(
-                "🖼️ Generated Event Poster"
-            )
-
-            st.image(
-                poster,
-                use_container_width=True
-            )
-
-            st.download_button(
-                "⬇️ Download Poster",
-                data=poster,
-                file_name="tech_mithra_event_poster.png",
-                mime="image/png"
-            )
-
-        else:
-
-            st.warning(
-                "Please enter Event Name."
+                "Please enter an event name."
             )
 
 
@@ -1091,22 +693,21 @@ elif app_mode == "📚 Exam Preparation":
 
     st.title("📚 Exam Preparation")
 
-    subject_name = st.text_input(
-        "Subject Name",
-        placeholder="Example: Fundamentals of Management"
+    subject = st.text_input(
+        "Subject Name"
     )
 
-    topic_name = st.text_input(
-        "Topic / Chapter",
-        placeholder="Example: Levels of Management"
+    topic = st.text_input(
+        "Topic"
     )
 
     answer_type = st.selectbox(
-        "Select Type",
+        "Answer Type",
         [
             "2 Marks Answer",
             "5 Marks Answer",
-            "10 Marks Answer"
+            "10 Marks Answer",
+            "Detailed Explanation"
         ]
     )
 
@@ -1115,24 +716,42 @@ elif app_mode == "📚 Exam Preparation":
         use_container_width=True
     ):
 
-        if subject_name.strip() and topic_name.strip():
+        if subject.strip() and topic.strip():
+
+            prompt = f"""
+Subject: {subject}
+Topic: {topic}
+Required Answer: {answer_type}
+"""
+
+            instruction = """
+You are an expert exam assistant.
+
+Prepare an accurate and exam-ready answer.
+
+For short answers be concise.
+For long answers use headings and important points.
+"""
 
             with st.spinner(
-                "Preparing exam answer..."
+                "Preparing answer..."
             ):
 
-                answer = exam_answer(
-                    subject_name,
-                    topic_name,
-                    answer_type
+                result = ask_ai(
+                    prompt,
+                    instruction
                 )
 
-            st.markdown(answer)
+            if not result:
+
+                result = local_answer(topic)
+
+            st.markdown(result)
 
         else:
 
             st.warning(
-                "Please enter Subject Name and Topic."
+                "Enter subject and topic."
             )
 
 
@@ -1142,9 +761,9 @@ elif app_mode == "📚 Exam Preparation":
 
 elif app_mode == "💼 Placement Prep":
 
-    st.title("💼 Placement & Career Preparation")
+    st.title("💼 Placement Preparation")
 
-    role_name = st.text_input(
+    role = st.text_input(
         "Target Job Role / Technology",
         placeholder="Example: Electrical Engineer"
     )
@@ -1154,22 +773,61 @@ elif app_mode == "💼 Placement Prep":
         use_container_width=True
     ):
 
-        if role_name.strip():
+        if role.strip():
+
+            prompt = f"""
+Target Role: {role}
+"""
+
+            instruction = """
+You are an expert placement mentor.
+
+Give:
+1. Required skills
+2. Important topics
+3. Technical interview questions
+4. HR questions
+5. Preparation roadmap
+
+Keep it practical and easy to understand.
+"""
 
             with st.spinner(
-                "Preparing placement guide..."
+                "Preparing guide..."
             ):
 
-                answer = placement_answer(
-                    role_name
+                result = ask_ai(
+                    prompt,
+                    instruction
                 )
 
-            st.markdown(answer)
+            if not result:
+
+                result = f"""
+# 🎯 Placement Guide: {role}
+
+## Required Skills
+- Technical fundamentals
+- Communication
+- Problem solving
+- Teamwork
+
+## Interview Questions
+1. Tell me about yourself.
+2. Explain your project.
+3. What are your strengths?
+4. Why should we hire you?
+
+## Preparation
+Practice technical concepts and interview questions regularly.
+"""
+
+            st.markdown(result)
 
         else:
 
             st.warning(
-                "Please enter a Job Role or Technology."
+                "Please enter a job role."
             )
 
 
@@ -1182,8 +840,9 @@ st.divider()
 st.markdown(
     """
 <center>
-<h3>🚀 Tech Mithra AI Pro</h3>
-<p>AI Academic Assistant | Project Guide | Event Planner | Exam Preparation | Placement Preparation</p>
+<b>🚀 Tech Mithra AI Pro</b><br>
+Ask Anything | Fast AI Answers | Event Planner |
+Exam Preparation | Placement Prep
 </center>
 """,
     unsafe_allow_html=True
