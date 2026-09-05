@@ -21,6 +21,7 @@ TEXT_MODELS = [
     "gemini-2.5-flash"
 ]
 
+
 # =========================================================
 # SESSION STATE
 # =========================================================
@@ -55,7 +56,6 @@ if "mcq_score" not in st.session_state:
 def get_client():
 
     try:
-
         api_key = st.secrets["GEMINI_API_KEY"]
 
         return genai.Client(
@@ -63,7 +63,6 @@ def get_client():
         )
 
     except Exception:
-
         return None
 
 
@@ -104,10 +103,7 @@ def ask_ai(prompt, extra_content=None):
         contents = [prompt]
 
         if extra_content:
-
-            contents.extend(
-                extra_content
-            )
+            contents.extend(extra_content)
 
         response = client.models.generate_content(
             model=TEXT_MODELS[0],
@@ -115,7 +111,6 @@ def ask_ai(prompt, extra_content=None):
         )
 
         if response.text:
-
             return response.text
 
         return "AI response empty ga vachindi."
@@ -133,7 +128,6 @@ st.sidebar.title("🚀 Tech Mithra AI Pro")
 
 menu_items = [
     "💬 AI Chat",
-    "💡 Doubt Solver",
     "🔬 Project & Lab Guide",
     "🎉 Event Planner",
     "📚 Exam Hacker",
@@ -166,7 +160,7 @@ if selected == "💬 AI Chat":
     )
 
     # -----------------------------------------------------
-    # SHOW CHAT HISTORY
+    # PREVIOUS CHAT
     # -----------------------------------------------------
 
     for message in st.session_state.chat_messages:
@@ -379,7 +373,7 @@ if selected == "💬 AI Chat":
                 )
 
         # -------------------------------------------------
-        # IF ONLY ATTACHMENT
+        # ATTACHMENT WITHOUT TEXT
         # -------------------------------------------------
 
         if not original_prompt.strip():
@@ -432,106 +426,6 @@ if selected == "💬 AI Chat":
 
 
 # =========================================================
-# DOUBT SOLVER
-# =========================================================
-
-elif selected == "💡 Doubt Solver":
-
-    st.title("💡 Doubt Solver")
-
-    question = st.text_area(
-        "Enter your doubt",
-        placeholder=(
-            "Example: Explain transformer working"
-        )
-    )
-
-    image_file = st.file_uploader(
-        "📷 Upload Question Image",
-        type=[
-            "png",
-            "jpg",
-            "jpeg"
-        ]
-    )
-
-    camera = st.camera_input(
-        "📸 Take Question Photo"
-    )
-
-    if st.button(
-        "🤖 Solve Doubt",
-        use_container_width=True
-    ):
-
-        extra = []
-
-        if image_file:
-
-            try:
-
-                extra.append(
-                    Image.open(image_file)
-                )
-
-            except Exception:
-                pass
-
-        if camera:
-
-            try:
-
-                extra.append(
-                    Image.open(camera)
-                )
-
-            except Exception:
-                pass
-
-        if not question.strip() and not extra:
-
-            st.warning(
-                "Question enter cheyyandi "
-                "or image upload cheyyandi."
-            )
-
-        else:
-
-            prompt = f"""
-You are Tech Mithra AI,
-a helpful college student assistant.
-
-Solve the student's doubt clearly.
-
-Question:
-{question}
-
-Give:
-
-1. Simple Definition
-2. Explanation
-3. Important Points
-4. Example
-5. Exam-friendly answer
-"""
-
-            answer = ask_ai(
-                prompt,
-                extra_content=extra
-            )
-
-            st.markdown(
-                answer
-            )
-
-            add_history(
-                "Doubt Solver",
-                question if question else "Image Question",
-                answer
-            )
-
-
-# =========================================================
 # PROJECT & LAB GUIDE
 # =========================================================
 
@@ -541,9 +435,7 @@ elif selected == "🔬 Project & Lab Guide":
 
     project = st.text_input(
         "Project / Lab Topic",
-        placeholder=(
-            "Example: Solar Tracking System"
-        )
+        placeholder="Example: Solar Tracking System"
     )
 
     project_image = st.file_uploader(
@@ -828,7 +720,7 @@ Make it easy to write in examination.
         )
 
         # -------------------------------------------------
-        # GENERATE MCQ
+        # GENERATE MCQS
         # -------------------------------------------------
 
         if st.button(
@@ -894,7 +786,6 @@ Rules:
                         .strip()
                     )
 
-                    # Remove Markdown fences
                     if response_text.startswith(
                         "```"
                     ):
@@ -946,7 +837,7 @@ Rules:
                     )
 
         # -------------------------------------------------
-        # DISPLAY MCQs
+        # DISPLAY MCQS
         # -------------------------------------------------
 
         if st.session_state.mcq_data:
@@ -977,10 +868,6 @@ Rules:
 """
                 )
 
-                # -----------------------------------------
-                # A/B/C/D RADIO OPTIONS
-                # -----------------------------------------
-
                 selected_answer = st.radio(
                     "Choose one:",
                     [
@@ -1005,7 +892,7 @@ Rules:
                 st.divider()
 
             # -------------------------------------------------
-            # SUBMIT BUTTON
+            # SUBMIT
             # -------------------------------------------------
 
             if not st.session_state.mcq_submitted:
@@ -1404,5 +1291,11 @@ elif selected == "📜 History":
 
 
 # =========================================================
-# END
+# FOOTER
 # =========================================================
+
+st.sidebar.divider()
+
+st.sidebar.caption(
+    "🚀 Tech Mithra AI Pro"
+)
