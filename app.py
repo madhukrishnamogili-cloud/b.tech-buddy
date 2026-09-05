@@ -3,11 +3,9 @@ import json
 from datetime import datetime
 from PIL import Image
 from google import genai
-from google.genai import types
 
 # =========================================================
 # TECH MITHRA AI PRO
-# Complete Single-Page Streamlit App
 # =========================================================
 
 st.set_page_config(
@@ -16,26 +14,12 @@ st.set_page_config(
     layout="wide"
 )
 
-# =========================================================
-# CONFIG
-# =========================================================
-
 APP_NAME = "Tech Mithra AI Pro"
-DEFAULT_ADMIN_EMAIL = "madhukrishnamogili@gmail.com"
-
-# Better: put these in Streamlit Secrets
-ADMIN_EMAIL = st.secrets.get("ADMIN_EMAIL", DEFAULT_ADMIN_EMAIL)
-ADMIN_PASSWORD = st.secrets.get(
-    "ADMIN_PASSWORD",
-    "ChangeThisAdminPassword123!"
-)
 
 TEXT_MODELS = [
     "gemini-2.5-flash-lite",
     "gemini-2.5-flash"
 ]
-
-IMAGE_MODEL = "gemini-2.5-flash-image"
 
 # =========================================================
 # SESSION STATE
@@ -46,9 +30,6 @@ if "history" not in st.session_state:
 
 if "chat_messages" not in st.session_state:
     st.session_state.chat_messages = []
-
-if "admin_verified" not in st.session_state:
-    st.session_state.admin_verified = False
 
 if "show_attachments" not in st.session_state:
     st.session_state.show_attachments = False
@@ -72,10 +53,17 @@ if "mcq_score" not in st.session_state:
 
 @st.cache_resource
 def get_client():
+
     try:
+
         api_key = st.secrets["GEMINI_API_KEY"]
-        return genai.Client(api_key=api_key)
+
+        return genai.Client(
+            api_key=api_key
+        )
+
     except Exception:
+
         return None
 
 
@@ -87,10 +75,13 @@ client = get_client()
 # =========================================================
 
 def add_history(mode, question, answer):
+
     st.session_state.history.insert(
         0,
         {
-            "time": datetime.now().strftime("%d-%m-%Y %H:%M"),
+            "time": datetime.now().strftime(
+                "%d-%m-%Y %H:%M"
+            ),
             "mode": mode,
             "question": question,
             "answer": answer
@@ -98,60 +89,40 @@ def add_history(mode, question, answer):
     )
 
 
-def ask_ai(prompt, model=None, extra_content=None):
-    if client is None:
-        return "⚠️ Gemini API key setup cheyyali. `.streamlit/secrets.toml` lo GEMINI_API_KEY add cheyyandi."
+def ask_ai(prompt, extra_content=None):
 
-    if model is None:
-        model = TEXT_MODELS[0]
+    if client is None:
+
+        return (
+            "⚠️ Gemini API key setup cheyyali.\n\n"
+            "`.streamlit/secrets.toml` lo "
+            "`GEMINI_API_KEY` add cheyyandi."
+        )
 
     try:
+
         contents = [prompt]
 
         if extra_content:
-            contents.extend(extra_content)
+
+            contents.extend(
+                extra_content
+            )
 
         response = client.models.generate_content(
-            model=model,
+            model=TEXT_MODELS[0],
             contents=contents
         )
 
         if response.text:
+
             return response.text
 
         return "AI response empty ga vachindi."
 
     except Exception as e:
-        return f"❌ AI Error: {str(e)}"
 
-
-def generate_image(prompt):
-    if client is None:
-        st.error("Gemini API key setup cheyyali.")
-        return
-
-    try:
-        response = client.models.generate_content(
-            model=IMAGE_MODEL,
-            contents=prompt,
-            config=types.GenerateContentConfig(
-                response_modalities=["Image"]
-            )
-        )
-
-        found = False
-
-        for part in response.parts:
-            if part.inline_data:
-                image = part.as_image()
-                st.image(image, use_container_width=True)
-                found = True
-
-        if not found:
-            st.warning("Image generate avvaledu.")
-
-    except Exception as e:
-        st.error(f"Image generation error: {e}")
+        return f"❌ AI Error: {e}"
 
 
 # =========================================================
@@ -170,9 +141,6 @@ menu_items = [
     "📜 History"
 ]
 
-if st.session_state.admin_verified:
-    menu_items.append("⚙️ Admin Settings")
-
 selected = st.sidebar.radio(
     "Select Option",
     menu_items
@@ -180,41 +148,9 @@ selected = st.sidebar.radio(
 
 st.sidebar.divider()
 
-# =========================================================
-# ADMIN LOGIN
-# =========================================================
-
-with st.sidebar.expander("🔐 Admin Login"):
-
-    admin_email_input = st.text_input(
-        "Admin Email",
-        key="admin_email_input"
-    )
-
-    admin_password_input = st.text_input(
-        "Admin Password",
-        type="password",
-        key="admin_password_input"
-    )
-
-    if st.button("Login as Admin", use_container_width=True):
-
-        if (
-            admin_email_input == ADMIN_EMAIL
-            and admin_password_input == ADMIN_PASSWORD
-        ):
-            st.session_state.admin_verified = True
-            st.success("Admin login successful!")
-            st.rerun()
-
-        else:
-            st.error("Invalid admin credentials.")
-
-    if st.session_state.admin_verified:
-
-        if st.button("Logout Admin", use_container_width=True):
-            st.session_state.admin_verified = False
-            st.rerun()
+st.sidebar.caption(
+    "AI Study • Projects • Exams • Placements"
+)
 
 
 # =========================================================
@@ -226,28 +162,39 @@ if selected == "💬 AI Chat":
     st.title("💬 Tech Mithra AI")
 
     st.caption(
-        "Ask doubts, upload photos/files, or use your camera."
+        "Ask anything • Upload Photo • Camera • Files"
     )
 
-    # Display previous chat
+    # -----------------------------------------------------
+    # SHOW CHAT HISTORY
+    # -----------------------------------------------------
+
     for message in st.session_state.chat_messages:
 
-        with st.chat_message(message["role"]):
+        with st.chat_message(
+            message["role"]
+        ):
 
             if message.get("image"):
+
                 st.image(
                     message["image"],
                     width=300
                 )
 
             if message.get("content"):
-                st.markdown(message["content"])
 
-    # =====================================================
-    # PLUS ATTACHMENT BUTTON
-    # =====================================================
+                st.markdown(
+                    message["content"]
+                )
 
-    col1, col2 = st.columns([1, 8])
+    # -----------------------------------------------------
+    # PLUS BUTTON
+    # -----------------------------------------------------
+
+    col1, col2 = st.columns(
+        [1, 10]
+    )
 
     with col1:
 
@@ -255,30 +202,21 @@ if selected == "💬 AI Chat":
             "➕",
             help="Upload Photo / Camera / Files"
         ):
+
             st.session_state.show_attachments = (
                 not st.session_state.show_attachments
             )
 
-    # =====================================================
+    # -----------------------------------------------------
     # ATTACHMENTS
-    # =====================================================
+    # -----------------------------------------------------
 
     uploaded_files = []
     camera_image = None
 
     if st.session_state.show_attachments:
 
-        st.info(
-            "📎 Attachments"
-        )
-
-        close_col, empty_col = st.columns([1, 7])
-
-        with close_col:
-
-            if st.button("❌ Close"):
-                st.session_state.show_attachments = False
-                st.rerun()
+        st.info("📎 Attachments")
 
         uploaded_files = st.file_uploader(
             "📁 Upload Photo / Files",
@@ -309,23 +247,25 @@ if selected == "💬 AI Chat":
 
         if uploaded_files:
 
-            st.write("Selected files:")
+            st.write("📎 Selected Files:")
 
             for file in uploaded_files:
+
                 st.write(
-                    f"📎 {file.name}"
+                    f"• {file.name}"
                 )
 
         if camera_image:
+
             st.image(
                 camera_image,
                 caption="Camera Image",
                 width=250
             )
 
-    # =====================================================
+    # -----------------------------------------------------
     # CHAT INPUT
-    # =====================================================
+    # -----------------------------------------------------
 
     user_prompt = st.chat_input(
         "Message Tech Mithra..."
@@ -333,62 +273,77 @@ if selected == "💬 AI Chat":
 
     if user_prompt is not None:
 
-        # User message
-        st.session_state.chat_messages.append(
-            {
-                "role": "user",
-                "content": user_prompt
-            }
-        )
+        original_prompt = user_prompt
 
         extra_content = []
+
         display_image = None
 
-        # Camera image
+        # -------------------------------------------------
+        # CAMERA IMAGE
+        # -------------------------------------------------
+
         if camera_image:
 
             try:
 
-                image = Image.open(camera_image)
+                image = Image.open(
+                    camera_image
+                )
 
-                extra_content.append(image)
+                extra_content.append(
+                    image
+                )
 
                 display_image = image
 
             except Exception:
                 pass
 
-        # Uploaded files
+        # -------------------------------------------------
+        # UPLOADED FILES
+        # -------------------------------------------------
+
         for file in uploaded_files:
 
             try:
 
                 file_type = file.type or ""
 
-                # Images
-                if file_type.startswith("image/"):
+                # IMAGE
+                if file_type.startswith(
+                    "image/"
+                ):
 
-                    image = Image.open(file)
+                    image = Image.open(
+                        file
+                    )
 
-                    extra_content.append(image)
+                    extra_content.append(
+                        image
+                    )
 
                     if display_image is None:
+
                         display_image = image
 
-                # Text/code files
-                elif file_type.startswith("text/") or file.name.endswith(
-                    (
-                        ".py",
-                        ".java",
-                        ".c",
-                        ".cpp",
-                        ".html",
-                        ".css",
-                        ".js",
-                        ".json",
-                        ".csv",
-                        ".md",
-                        ".txt"
+                # TEXT / CODE
+                elif (
+                    file_type.startswith("text/")
+                    or file.name.endswith(
+                        (
+                            ".py",
+                            ".java",
+                            ".c",
+                            ".cpp",
+                            ".html",
+                            ".css",
+                            ".js",
+                            ".json",
+                            ".csv",
+                            ".md",
+                            ".txt"
+                        )
                     )
                 ):
 
@@ -398,31 +353,67 @@ if selected == "💬 AI Chat":
                     )
 
                     extra_content.append(
-                        f"\n\n--- FILE: {file.name} ---\n{text_data}"
+                        f"""
+--- FILE: {file.name} ---
+
+{text_data}
+
+--- END FILE ---
+"""
                     )
 
                 else:
 
                     extra_content.append(
-                        f"\n[File attached: {file.name}]"
+                        f"""
+[File attached: {file.name}]
+"""
                     )
 
             except Exception:
+
                 extra_content.append(
-                    f"\n[File attached: {file.name}]"
+                    f"""
+[File attached: {file.name}]
+"""
                 )
 
-        if not user_prompt.strip():
+        # -------------------------------------------------
+        # IF ONLY ATTACHMENT
+        # -------------------------------------------------
 
-            user_prompt = (
-                "Analyze the attached photo/files and explain "
-                "the important information in a simple way."
+        if not original_prompt.strip():
+
+            original_prompt = (
+                "Analyze the attached photo/files "
+                "and explain the important information "
+                "in simple student-friendly language."
             )
 
+        # -------------------------------------------------
+        # SAVE USER MESSAGE
+        # -------------------------------------------------
+
+        st.session_state.chat_messages.append(
+            {
+                "role": "user",
+                "content": original_prompt,
+                "image": display_image
+            }
+        )
+
+        # -------------------------------------------------
+        # AI RESPONSE
+        # -------------------------------------------------
+
         answer = ask_ai(
-            user_prompt,
+            original_prompt,
             extra_content=extra_content
         )
+
+        # -------------------------------------------------
+        # SAVE AI RESPONSE
+        # -------------------------------------------------
 
         st.session_state.chat_messages.append(
             {
@@ -433,7 +424,7 @@ if selected == "💬 AI Chat":
 
         add_history(
             "AI Chat",
-            user_prompt,
+            original_prompt,
             answer
         )
 
@@ -450,16 +441,22 @@ elif selected == "💡 Doubt Solver":
 
     question = st.text_area(
         "Enter your doubt",
-        placeholder="Example: Explain transformer working..."
+        placeholder=(
+            "Example: Explain transformer working"
+        )
     )
 
     image_file = st.file_uploader(
-        "📷 Upload question image",
-        type=["png", "jpg", "jpeg"]
+        "📷 Upload Question Image",
+        type=[
+            "png",
+            "jpg",
+            "jpeg"
+        ]
     )
 
     camera = st.camera_input(
-        "📸 Take a photo of your question"
+        "📸 Take Question Photo"
     )
 
     if st.button(
@@ -472,31 +469,37 @@ elif selected == "💡 Doubt Solver":
         if image_file:
 
             try:
+
                 extra.append(
                     Image.open(image_file)
                 )
+
             except Exception:
                 pass
 
         if camera:
 
             try:
+
                 extra.append(
                     Image.open(camera)
                 )
+
             except Exception:
                 pass
 
         if not question.strip() and not extra:
 
             st.warning(
-                "Question enter cheyyandi or image upload cheyyandi."
+                "Question enter cheyyandi "
+                "or image upload cheyyandi."
             )
 
         else:
 
             prompt = f"""
-You are Tech Mithra AI, a helpful college student assistant.
+You are Tech Mithra AI,
+a helpful college student assistant.
 
 Solve the student's doubt clearly.
 
@@ -504,10 +507,11 @@ Question:
 {question}
 
 Give:
-1. Simple definition
+
+1. Simple Definition
 2. Explanation
-3. Important points
-4. Example if useful
+3. Important Points
+4. Example
 5. Exam-friendly answer
 """
 
@@ -516,7 +520,9 @@ Give:
                 extra_content=extra
             )
 
-            st.markdown(answer)
+            st.markdown(
+                answer
+            )
 
             add_history(
                 "Doubt Solver",
@@ -535,12 +541,18 @@ elif selected == "🔬 Project & Lab Guide":
 
     project = st.text_input(
         "Project / Lab Topic",
-        placeholder="Example: Solar Tracking System"
+        placeholder=(
+            "Example: Solar Tracking System"
+        )
     )
 
     project_image = st.file_uploader(
-        "📷 Upload project image",
-        type=["png", "jpg", "jpeg"]
+        "📷 Upload Project Image",
+        type=[
+            "png",
+            "jpg",
+            "jpeg"
+        ]
     )
 
     if st.button(
@@ -561,9 +573,13 @@ elif selected == "🔬 Project & Lab Guide":
             if project_image:
 
                 try:
+
                     extra.append(
-                        Image.open(project_image)
+                        Image.open(
+                            project_image
+                        )
                     )
+
                 except Exception:
                     pass
 
@@ -574,17 +590,18 @@ Topic:
 {project}
 
 Include:
+
 1. Introduction
 2. Objective
 3. Components / Requirements
-4. Block diagram explanation
-5. Working principle
-6. Step-by-step procedure
+4. Block Diagram Explanation
+5. Working Principle
+6. Step-by-Step Procedure
 7. Advantages
 8. Disadvantages
 9. Applications
 10. Result
-11. Viva questions and answers
+11. Viva Questions and Answers
 
 Use simple student-friendly language.
 """
@@ -594,7 +611,9 @@ Use simple student-friendly language.
                 extra_content=extra
             )
 
-            st.markdown(answer)
+            st.markdown(
+                answer
+            )
 
             add_history(
                 "Project & Lab Guide",
@@ -650,54 +669,31 @@ Audience:
 {audience}
 
 Include:
-- Event objective
+
+- Event Objective
 - Schedule
 - Activities
-- Required resources
-- Team responsibilities
-- Budget categories
-- Promotion ideas
-- Risk management
-- Closing plan
+- Required Resources
+- Team Responsibilities
+- Budget Categories
+- Promotion Ideas
+- Risk Management
+- Closing Plan
 """
 
-        answer = ask_ai(prompt)
+        answer = ask_ai(
+            prompt
+        )
 
-        st.markdown(answer)
+        st.markdown(
+            answer
+        )
 
         add_history(
             "Event Planner",
             event_name,
             answer
         )
-
-    st.divider()
-
-    st.subheader("🎨 Event Poster Image Prompt")
-
-    poster_prompt = st.text_area(
-        "Enter poster idea"
-    )
-
-    if st.button(
-        "🖼️ Generate Event Image"
-    ):
-
-        if poster_prompt:
-
-            generate_image(
-                f"""
-Create a professional college event poster.
-
-Event:
-{poster_prompt}
-
-Modern educational design,
-clean typography,
-professional college atmosphere,
-high quality.
-"""
-            )
 
 
 # =========================================================
@@ -709,7 +705,7 @@ elif selected == "📚 Exam Hacker":
     st.title("📚 Exam Hacker")
 
     st.caption(
-        "MCQs + Answers + Explanations + Score"
+        "📝 Answers + 🎯 MCQs + 📊 Score"
     )
 
     tab1, tab2 = st.tabs(
@@ -726,8 +722,11 @@ elif selected == "📚 Exam Hacker":
     with tab1:
 
         exam_question = st.text_area(
-            "Enter exam question",
-            placeholder="Example: Explain working of induction motor."
+            "Enter Exam Question",
+            placeholder=(
+                "Example: Explain working of "
+                "three phase induction motor."
+            )
         )
 
         marks = st.selectbox(
@@ -765,18 +764,23 @@ Marks:
 Create a clear exam answer.
 
 Include:
+
 - Definition
-- Main explanation
-- Important points
+- Main Explanation
+- Important Points
 - Examples if needed
 - Conclusion
 
-Make it easy to write in an examination.
+Make it easy to write in examination.
 """
 
-                answer = ask_ai(prompt)
+                answer = ask_ai(
+                    prompt
+                )
 
-                st.markdown(answer)
+                st.markdown(
+                    answer
+                )
 
                 add_history(
                     "Exam Hacker",
@@ -790,29 +794,41 @@ Make it easy to write in an examination.
 
     with tab2:
 
-        st.subheader("🎯 MCQ Practice Quiz")
+        st.subheader(
+            "🎯 MCQ Practice Quiz"
+        )
 
         subject = st.text_input(
-            "Subject / Topic",
-            placeholder="Example: Management, IoT, Electrical Machines"
+            "📚 Subject / Topic",
+            placeholder=(
+                "Example: Management"
+            ),
+            key="mcq_subject"
         )
 
         number_of_questions = st.selectbox(
-            "Number of MCQs",
-            [5, 10, 15, 20]
+            "🔢 Number of MCQs",
+            [
+                5,
+                10,
+                15,
+                20
+            ],
+            key="mcq_number"
         )
 
         difficulty = st.selectbox(
-            "Difficulty",
+            "⚡ Difficulty",
             [
                 "Easy",
                 "Medium",
                 "Hard"
-            ]
+            ],
+            key="mcq_difficulty"
         )
 
         # -------------------------------------------------
-        # GENERATE MCQS
+        # GENERATE MCQ
         # -------------------------------------------------
 
         if st.button(
@@ -823,14 +839,14 @@ Make it easy to write in an examination.
             if not subject.strip():
 
                 st.warning(
-                    "Subject / topic enter cheyyandi."
+                    "Subject / Topic enter cheyyandi."
                 )
 
             else:
 
                 prompt = f"""
-Generate exactly {number_of_questions} multiple-choice
-questions for college students.
+Generate exactly {number_of_questions}
+multiple-choice questions for college students.
 
 Subject:
 {subject}
@@ -840,7 +856,7 @@ Difficulty:
 
 Return ONLY valid JSON.
 
-Use this exact format:
+Use exactly this format:
 
 [
   {{
@@ -857,26 +873,42 @@ Use this exact format:
 ]
 
 Rules:
-- Every question must have exactly A, B, C, D.
-- answer must be only A, B, C or D.
-- Make sure the correct answer matches the option.
-- Do not add markdown.
-- Do not add extra text outside JSON.
+
+1. Every question must have exactly A, B, C, D.
+2. Each option must be different.
+3. answer must be only A, B, C or D.
+4. Correct answer must match the option.
+5. Give a short explanation.
+6. Do not use Markdown.
+7. Do not add text outside JSON.
 """
 
                 try:
 
-                    response_text = ask_ai(prompt)
+                    response_text = ask_ai(
+                        prompt
+                    )
 
-                    # Remove accidental markdown fences
-                    response_text = response_text.strip()
+                    response_text = (
+                        response_text
+                        .strip()
+                    )
 
-                    if response_text.startswith("```"):
+                    # Remove Markdown fences
+                    if response_text.startswith(
+                        "```"
+                    ):
 
                         response_text = (
                             response_text
-                            .replace("```json", "")
-                            .replace("```", "")
+                            .replace(
+                                "```json",
+                                ""
+                            )
+                            .replace(
+                                "```",
+                                ""
+                            )
                             .strip()
                         )
 
@@ -884,15 +916,21 @@ Rules:
                         response_text
                     )
 
-                    if isinstance(mcqs, list):
+                    if isinstance(
+                        mcqs,
+                        list
+                    ):
 
                         st.session_state.mcq_data = mcqs
+
                         st.session_state.mcq_answers = {}
+
                         st.session_state.mcq_submitted = False
+
                         st.session_state.mcq_score = 0
 
                         st.success(
-                            f"✅ {len(mcqs)} MCQs generated!"
+                            f"✅ {len(mcqs)} MCQs Generated!"
                         )
 
                     else:
@@ -908,7 +946,7 @@ Rules:
                     )
 
         # -------------------------------------------------
-        # SHOW MCQS
+        # DISPLAY MCQs
         # -------------------------------------------------
 
         if st.session_state.mcq_data:
@@ -916,19 +954,16 @@ Rules:
             st.divider()
 
             st.subheader(
-                "📝 Choose the correct answer"
+                "📝 Select Your Answers"
             )
-
-            # -------------------------------------------------
-            # MCQ OPTIONS
-            # -------------------------------------------------
 
             for index, mcq in enumerate(
                 st.session_state.mcq_data
             ):
 
-                st.markdown(
-                    f"### Q{index + 1}. {mcq.get('question', '')}"
+                question = mcq.get(
+                    "question",
+                    f"Question {index + 1}"
                 )
 
                 options = mcq.get(
@@ -936,33 +971,33 @@ Rules:
                     {}
                 )
 
-                option_list = [
-                    "A",
-                    "B",
-                    "C",
-                    "D"
-                ]
+                st.markdown(
+                    f"""
+### Q{index + 1}. {question}
+"""
+                )
 
-                option_text = []
-
-                for letter in option_list:
-
-                    option_text.append(
-                        f"{letter}. {options.get(letter, '')}"
-                    )
+                # -----------------------------------------
+                # A/B/C/D RADIO OPTIONS
+                # -----------------------------------------
 
                 selected_answer = st.radio(
-                    "Select your answer:",
-                    option_list,
-                    format_func=lambda x,
+                    "Choose one:",
+                    [
+                        "A",
+                        "B",
+                        "C",
+                        "D"
+                    ],
+                    format_func=lambda option,
                     opts=options: (
-                        f"{x}. {opts.get(x, '')}"
+                        f"{option}. "
+                        f"{opts.get(option, '')}"
                     ),
-                    key=f"mcq_option_{index}",
+                    key=f"answer_{index}",
                     disabled=st.session_state.mcq_submitted
                 )
 
-                # Save selected answer
                 st.session_state.mcq_answers[
                     index
                 ] = selected_answer
@@ -970,13 +1005,13 @@ Rules:
                 st.divider()
 
             # -------------------------------------------------
-            # SUBMIT QUIZ
+            # SUBMIT BUTTON
             # -------------------------------------------------
 
             if not st.session_state.mcq_submitted:
 
                 if st.button(
-                    "✅ Submit Quiz",
+                    "✅ SUBMIT QUIZ",
                     use_container_width=True
                 ):
 
@@ -987,17 +1022,26 @@ Rules:
                     ):
 
                         correct_answer = str(
-                            mcq.get("answer", "")
+                            mcq.get(
+                                "answer",
+                                ""
+                            )
                         ).upper().strip()
 
-                        user_answer = st.session_state.mcq_answers.get(
-                            index
+                        user_answer = (
+                            st.session_state.mcq_answers
+                            .get(index)
                         )
 
-                        if user_answer == correct_answer:
+                        if (
+                            user_answer
+                            == correct_answer
+                        ):
+
                             score += 1
 
                     st.session_state.mcq_score = score
+
                     st.session_state.mcq_submitted = True
 
                     total = len(
@@ -1006,34 +1050,50 @@ Rules:
 
                     percentage = (
                         score / total * 100
-                        if total > 0
+                        if total
                         else 0
                     )
 
                     if percentage >= 80:
-                        performance = "🏆 Excellent!"
+
+                        performance = (
+                            "🏆 Excellent!"
+                        )
 
                     elif percentage >= 60:
-                        performance = "👏 Good!"
+
+                        performance = (
+                            "👏 Good!"
+                        )
 
                     elif percentage >= 40:
-                        performance = "📖 Need More Practice"
+
+                        performance = (
+                            "📖 Need More Practice"
+                        )
 
                     else:
-                        performance = "💪 Keep Practicing!"
 
-                    result_text = f"""
-MCQ Quiz completed.
+                        performance = (
+                            "💪 Keep Practicing!"
+                        )
+
+                    result = f"""
+MCQ Quiz Result
+
+Subject: {subject}
 
 Score: {score}/{total}
+
 Percentage: {percentage:.1f}%
+
 Performance: {performance}
 """
 
                     add_history(
-                        "Exam Hacker MCQ Quiz",
+                        "Exam Hacker MCQ",
                         subject,
-                        result_text
+                        result
                     )
 
                     st.rerun()
@@ -1052,42 +1112,71 @@ Performance: {performance}
 
                 percentage = (
                     score / total * 100
-                    if total > 0
+                    if total
                     else 0
                 )
 
                 if percentage >= 80:
-                    performance = "🏆 Excellent!"
+
+                    performance = (
+                        "🏆 Excellent!"
+                    )
 
                 elif percentage >= 60:
-                    performance = "👏 Good!"
+
+                    performance = (
+                        "👏 Good!"
+                    )
 
                 elif percentage >= 40:
-                    performance = "📖 Need More Practice"
+
+                    performance = (
+                        "📖 Need More Practice"
+                    )
 
                 else:
-                    performance = "💪 Keep Practicing!"
 
-                st.success(
-                    f"🎯 Score: {score}/{total}"
-                )
-
-                st.info(
-                    f"📊 Percentage: {percentage:.1f}%"
-                )
-
-                st.warning(
-                    f"Performance: {performance}"
-                )
+                    performance = (
+                        "💪 Keep Practicing!"
+                    )
 
                 st.divider()
 
                 st.subheader(
-                    "📋 Answers & Explanations"
+                    "🏆 QUIZ RESULT"
+                )
+
+                col1, col2, col3 = st.columns(3)
+
+                with col1:
+
+                    st.metric(
+                        "Score",
+                        f"{score}/{total}"
+                    )
+
+                with col2:
+
+                    st.metric(
+                        "Percentage",
+                        f"{percentage:.1f}%"
+                    )
+
+                with col3:
+
+                    st.metric(
+                        "Performance",
+                        performance
+                    )
+
+                st.divider()
+
+                st.subheader(
+                    "📋 Correct Answers & Explanations"
                 )
 
                 # -------------------------------------------------
-                # SHOW CORRECT ANSWERS
+                # ANSWERS
                 # -------------------------------------------------
 
                 for index, mcq in enumerate(
@@ -1105,62 +1194,79 @@ Performance: {performance}
                     )
 
                     correct = str(
-                        mcq.get("answer", "")
+                        mcq.get(
+                            "answer",
+                            ""
+                        )
                     ).upper()
 
-                    user_answer = st.session_state.mcq_answers.get(
-                        index,
-                        "Not Answered"
+                    user_answer = (
+                        st.session_state.mcq_answers
+                        .get(
+                            index,
+                            "Not Answered"
+                        )
                     )
 
                     explanation = mcq.get(
                         "explanation",
-                        "No explanation available."
+                        "Explanation not available."
                     )
 
                     st.markdown(
-                        f"### Q{index + 1}. {question}"
+                        f"""
+### Q{index + 1}. {question}
+"""
                     )
 
                     st.write(
-                        f"**Your Answer:** {user_answer}"
+                        f"**Your Answer:** "
+                        f"{user_answer}"
                     )
 
                     st.write(
-                        f"**Correct Answer:** {correct}. "
+                        f"**Correct Answer:** "
+                        f"{correct}. "
                         f"{options.get(correct, '')}"
                     )
 
-                    if user_answer == correct:
+                    if (
+                        user_answer
+                        == correct
+                    ):
 
                         st.success(
-                            "✅ Correct"
+                            "✅ Correct Answer"
                         )
 
                     else:
 
                         st.error(
-                            "❌ Incorrect"
+                            "❌ Wrong Answer"
                         )
 
                     st.info(
-                        f"💡 Explanation: {explanation}"
+                        f"💡 Explanation: "
+                        f"{explanation}"
                     )
 
                     st.divider()
 
                 # -------------------------------------------------
-                # RETAKE QUIZ
+                # NEW QUIZ
                 # -------------------------------------------------
 
                 if st.button(
-                    "🔄 Retake / New Quiz",
+                    "🔄 START NEW QUIZ",
                     use_container_width=True
                 ):
 
                     st.session_state.mcq_data = []
+
                     st.session_state.mcq_answers = {}
+
                     st.session_state.mcq_submitted = False
+
                     st.session_state.mcq_score = 0
 
                     st.rerun()
@@ -1175,7 +1281,7 @@ elif selected == "💼 Placement Prep":
     st.title("💼 Placement Prep")
 
     role = st.selectbox(
-        "Target Role",
+        "🎯 Target Role",
         [
             "Software Developer",
             "Electrical Engineer",
@@ -1188,7 +1294,7 @@ elif selected == "💼 Placement Prep":
     )
 
     preparation = st.selectbox(
-        "Preparation Type",
+        "📚 Preparation Type",
         [
             "Interview Questions",
             "Technical Questions",
@@ -1222,16 +1328,21 @@ Student topic/question:
 Give useful placement preparation content.
 
 Include:
+
 - Question
-- Best answer
+- Best Answer
 - Explanation
-- Interview tips
-- Common mistakes
+- Interview Tips
+- Common Mistakes
 """
 
-        answer = ask_ai(prompt)
+        answer = ask_ai(
+            prompt
+        )
 
-        st.markdown(answer)
+        st.markdown(
+            answer
+        )
 
         add_history(
             "Placement Prep",
@@ -1257,18 +1368,19 @@ elif selected == "📜 History":
     else:
 
         st.write(
-            f"Total conversations: "
+            f"Total Records: "
             f"{len(st.session_state.history)}"
         )
 
         if st.button(
-            "🗑️ Clear History"
+            "🗑️ Clear History",
+            use_container_width=True
         ):
 
             st.session_state.history = []
 
             st.success(
-                "History cleared."
+                "History cleared successfully."
             )
 
             st.rerun()
@@ -1276,105 +1388,21 @@ elif selected == "📜 History":
         for item in st.session_state.history:
 
             with st.expander(
-                f"{item['mode']} • {item['time']}"
+                f"{item['mode']} • "
+                f"{item['time']}"
             ):
 
                 st.markdown(
-                    f"**Question:**\n{item['question']}"
+                    f"**Question:**\n"
+                    f"{item['question']}"
                 )
 
                 st.markdown(
-                    f"**Answer:**\n{item['answer']}"
+                    f"**Answer:**\n"
+                    f"{item['answer']}"
                 )
 
 
 # =========================================================
-# ADMIN SETTINGS
+# END
 # =========================================================
-
-elif selected == "⚙️ Admin Settings":
-
-    # Extra security check
-    if not st.session_state.admin_verified:
-
-        st.error(
-            "🔒 Admin access only."
-        )
-
-    else:
-
-        st.title("⚙️ Admin Settings")
-
-        st.success(
-            "🔐 Admin verified"
-        )
-
-        st.divider()
-
-        app_title = st.text_input(
-            "App Title",
-            value=APP_NAME
-        )
-
-        welcome_message = st.text_area(
-            "Welcome Message",
-            value="Welcome to Tech Mithra AI Pro!"
-        )
-
-        ai_enabled = st.toggle(
-            "Enable AI",
-            value=True
-        )
-
-        preferred_model = st.selectbox(
-            "Preferred AI Model",
-            TEXT_MODELS
-        )
-
-        st.write(
-            f"**Current App Title:** {app_title}"
-        )
-
-        st.write(
-            f"**AI Enabled:** {ai_enabled}"
-        )
-
-        st.write(
-            f"**Preferred Model:** {preferred_model}"
-        )
-
-        st.divider()
-
-        if st.button(
-            "🗑️ Clear All Session History",
-            use_container_width=True
-        ):
-
-            st.session_state.history = []
-            st.session_state.chat_messages = []
-
-            st.success(
-                "History cleared successfully."
-            )
-
-        st.divider()
-
-        st.info(
-            "⚠️ Admin Settings normal users ki sidebar lo kanipinchavu. "
-            "Admin login successful ayyaka matrame menu kanipistundi."
-        )
-
-
-# =========================================================
-# FOOTER
-# =========================================================
-
-st.sidebar.divider()
-
-st.sidebar.caption(
-    "🚀 Tech Mithra AI Pro"
-)
-
-st.sidebar.caption(
-    "AI Study • Projects • Exams • Placements"
-)
